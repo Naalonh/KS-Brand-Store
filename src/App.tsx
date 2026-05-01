@@ -9,6 +9,7 @@ import {
 import { LoginPage } from './features/auth/components/LoginPage'
 import { ResetPasswordPage } from './features/auth/components/ResetPasswordPage'
 import { useAdminSession } from './features/auth/hooks/useAdminSession'
+import type { AdminSession } from './features/auth/services/authService'
 import { CartPage } from './features/cart/CartPage'
 import { useCategories } from './features/categories/hooks/useCategories'
 import { MyStorePage } from './features/mystore/MyStorePage'
@@ -122,6 +123,12 @@ function App() {
     return isLoggedIn
   }
 
+  const handleAdminOtpLogin = (session: AdminSession) => {
+    const isLoggedIn = adminSession.loginWithSession(session)
+    openView('adminResetPassword')
+    return isLoggedIn
+  }
+
   const openProductManagement = () => {
     openView(adminSession.isAuthenticated ? 'admin' : 'adminLogin')
   }
@@ -177,10 +184,14 @@ function App() {
           sizesState={sizesState}
         />
       ) : isAdminResetPasswordRoute ? (
-        <ResetPasswordPage onBackToLogin={() => openView('adminLogin')} />
+        <ResetPasswordPage
+          accessToken={adminSession.accessToken}
+          onBackToLogin={() => openView('adminLogin')}
+        />
       ) : isAdminAreaRoute ? (
         <LoginPage
           onLogin={handleAdminLogin}
+          onOtpLogin={handleAdminOtpLogin}
           onViewStore={() => openView('store')}
         />
       ) : currentView === 'mystore' ? (

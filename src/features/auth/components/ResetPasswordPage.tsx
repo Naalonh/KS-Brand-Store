@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { updateAdminPassword } from '../services/authService'
 
 type ResetPasswordPageProps = {
+  accessToken?: string
   onBackToLogin: () => void
 }
 
@@ -21,8 +22,12 @@ const getRecoveryAccessToken = () => {
   )
 }
 
-export function ResetPasswordPage({ onBackToLogin }: ResetPasswordPageProps) {
-  const accessToken = useMemo(getRecoveryAccessToken, [])
+export function ResetPasswordPage({
+  accessToken: sessionAccessToken = '',
+  onBackToLogin,
+}: ResetPasswordPageProps) {
+  const recoveryAccessToken = useMemo(getRecoveryAccessToken, [])
+  const accessToken = recoveryAccessToken || sessionAccessToken
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')

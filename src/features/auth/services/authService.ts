@@ -31,11 +31,16 @@ type SupabaseUser = {
 const TOKEN_REFRESH_MARGIN_SECONDS = 60
 const WRONG_EMAIL_MESSAGE = 'Wrong email.'
 const DEFAULT_RESET_RETRY_AFTER_SECONDS = 65
+const DEFAULT_OTP_RETRY_AFTER_SECONDS = 65
 const DEFAULT_EMAIL_RETRY_AFTER_SECONDS = 60 * 60
 const RESET_RATE_LIMIT_MESSAGE =
   'Too many reset emails. Please wait before sending another link.'
+const OTP_RATE_LIMIT_MESSAGE =
+  'Too many OTP emails. Please wait before sending another code.'
 const EMAIL_RATE_LIMIT_MESSAGE =
   'Email sending limit reached. Please wait about 1 hour before sending another reset link.'
+const INVALID_OTP_MESSAGE =
+  'Wrong or expired OTP. Check the latest email and enter the code again.'
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase()
 
@@ -48,6 +53,9 @@ const isRateLimitError = (message: string) =>
 const isEmailRateLimitError = (message: string) =>
   /email.*rate limit|rate limit.*email|email.*exceeded/i.test(message)
 
+const isInvalidOtpError = (message: string) =>
+  /otp|token|code|expired|invalid|forbidden|403/i.test(message)
+
 export class PasswordResetRateLimitError extends Error {
   retryAfterSeconds: number
 
@@ -58,6 +66,26 @@ export class PasswordResetRateLimitError extends Error {
     super(message)
     this.name = 'PasswordResetRateLimitError'
     this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
+export class EmailOtpRateLimitError extends Error {
+  retryAfterSeconds: number
+
+  constructor(
+    message = OTP_RATE_LIMIT_MESSAGE,
+    retryAfterSeconds = DEFAULT_OTP_RETRY_AFTER_SECONDS,
+  ) {
+    super(message)
+    this.name = 'EmailOtpRateLimitError'
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
+export class InvalidEmailOtpError extends Error {
+  constructor(message = INVALID_OTP_MESSAGE) {
+    super(message)
+    this.name = 'InvalidEmailOtpError'
   }
 }
 
@@ -200,6 +228,90 @@ export async function requestAdminPasswordReset(email: string) {
 
     throw new Error(errorMessage)
   }
+}
+
+export async function requestAdminLoginOtp(email: string) {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase environment variables are missing.')
+  }
+
+  const normalizedEmail = normalizeEmail(email)
+
+  if (
+    adminAuthConfig.email &&
+    normalizedEmail !== normalizeEmail(adminAuthConfig.email)
+  ) {
+    throw new Error(WRONG_EMAIL_MESSAGE)
+  }
+
+  const response = await fetch(`${supabaseConfig.url}/auth/v1/otp`, {
+    method: 'POST',
+    headers: getSupabaseHeaders(),
+    body: JSON.stringify({
+      create_user: false,
+      email: normalizedEmail,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorMessage = await getSupabaseAuthError(response)
+    if (isUserNotFoundError(errorMessage)) {
+      throw new Error(WRONG_EMAIL_MESSAGE)
+    }
+
+    if (response.status === 429 || isRateLimitError(errorMessage)) {
+      const isEmailLimit = isEmailRateLimitError(errorMessage)
+      throw new EmailOtpRateLimitError(
+        isEmailLimit ? EMAIL_RATE_LIMIT_MESSAGE : OTP_RATE_LIMIT_MESSAGE,
+        getRetryAfterSeconds(
+          response,
+          isEmailLimit
+            ? DEFAULT_EMAIL_RETRY_AFTER_SECONDS
+            : DEFAULT_OTP_RETRY_AFTER_SECONDS,
+        ),
+      )
+    }
+
+    throw new Error(errorMessage)
+  }
+}
+
+export async function verifyAdminLoginOtp(email: string, token: string) {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase environment variables are missing.')
+  }
+
+  const normalizedEmail = normalizeEmail(email)
+
+  if (
+    adminAuthConfig.email &&
+    normalizedEmail !== normalizeEmail(adminAuthConfig.email)
+  ) {
+    throw new Error(WRONG_EMAIL_MESSAGE)
+  }
+
+  const response = await fetch(`${supabaseConfig.url}/auth/v1/verify`, {
+    method: 'POST',
+    headers: getSupabaseHeaders(),
+    body: JSON.stringify({
+      email: normalizedEmail,
+      token: token.trim(),
+      type: 'email',
+    }),
+  })
+
+  if (!response.ok) {
+    const errorMessage = await getSupabaseAuthError(response)
+    if (response.status === 403 || isInvalidOtpError(errorMessage)) {
+      throw new InvalidEmailOtpError()
+    }
+
+    throw new Error(errorMessage)
+  }
+
+  const data = (await response.json()) as SupabasePasswordSession
+
+  return mapSupabaseSession(data, normalizedEmail)
 }
 
 export async function updateAdminPassword(

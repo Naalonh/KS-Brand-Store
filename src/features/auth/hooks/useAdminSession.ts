@@ -94,6 +94,11 @@ export function useAdminSession() {
     return true
   }
 
+  const loginWithSession = (nextSession: AdminSession) => {
+    setSession(nextSession)
+    return true
+  }
+
   const logout = () => {
     setIsRestoring(false)
     setSession(null)
@@ -106,6 +111,7 @@ export function useAdminSession() {
     isAuthenticated: Boolean(session),
     isRestoring,
     login,
+    loginWithSession,
     logout,
     source: session?.source,
   }
