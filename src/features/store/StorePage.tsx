@@ -145,7 +145,7 @@ export function StorePage({
           </div>
 
           {activeProducts.length > 0 ? (
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:gap-6">
               {activeProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
