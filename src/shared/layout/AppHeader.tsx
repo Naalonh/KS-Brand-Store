@@ -7,6 +7,8 @@ type AppHeaderProps = {
   isAuthenticated: boolean
   onLogout: () => void
   onOpenView: (view: View) => void
+  onToggleTheme: () => void
+  theme: 'dark' | 'light'
 }
 
 export function AppHeader({
@@ -15,6 +17,8 @@ export function AppHeader({
   isAuthenticated,
   onLogout,
   onOpenView,
+  onToggleTheme,
+  theme,
 }: AppHeaderProps) {
   if (currentView === 'admin' || currentView === 'adminLogin') {
     return (
@@ -77,16 +81,38 @@ export function AppHeader({
               Logout
             </button>
           ) : null}
+          <button
+            type="button"
+            onClick={() => onOpenView('store')}
+            aria-label="Open store"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+          >
+            <svg
+              aria-hidden="true"
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.1"
+              viewBox="0 0 24 24"
+            >
+              <path d="M4 10h16" />
+              <path d="M5 10l1.4-5h11.2L19 10" />
+              <path d="M6 10v9h12v-9" />
+              <path d="M9 19v-5h6v5" />
+            </svg>
+          </button>
           <a
             href="https://m.me/ksbrandstore"
             target="_blank"
             rel="noreferrer"
             aria-label="Order on Messenger"
-            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+            className="relative inline-flex h-12 w-12 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
           >
             <svg
               aria-hidden="true"
-              className="h-5 w-5"
+              className="h-7 w-7"
               fill="none"
               stroke="currentColor"
               strokeLinecap="round"
@@ -100,11 +126,57 @@ export function AppHeader({
             <span className="sr-only">Order on Messenger</span>
             <span
               aria-hidden="true"
-              className="absolute right-1 top-1 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-black leading-none text-white"
+              className="absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-black leading-none text-white"
             >
               1
             </span>
           </a>
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={
+              theme === 'dark'
+                ? 'Switch to light mode'
+                : 'Switch to dark mode'
+            }
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+          >
+            {theme === 'dark' ? (
+              <svg
+                aria-hidden="true"
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.1"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2" />
+                <path d="M12 20v2" />
+                <path d="m4.9 4.9 1.4 1.4" />
+                <path d="m17.7 17.7 1.4 1.4" />
+                <path d="M2 12h2" />
+                <path d="M20 12h2" />
+                <path d="m6.3 17.7-1.4 1.4" />
+                <path d="m19.1 4.9-1.4 1.4" />
+              </svg>
+            ) : (
+              <svg
+                aria-hidden="true"
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.1"
+                viewBox="0 0 24 24"
+              >
+                <path d="M20.5 14.2A8 8 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
     </header>

@@ -15,8 +15,19 @@ const adminTitles: Record<AdminSection, string> = {
   size: 'Dashboard / Size',
 }
 
+type Theme = 'dark' | 'light'
+
+const THEME_KEY = 'ks-brand-store-theme'
+
+const getSavedTheme = (): Theme => {
+  const savedTheme = window.localStorage.getItem(THEME_KEY)
+
+  return savedTheme === 'light' ? 'light' : 'dark'
+}
+
 function App() {
   const { currentView, openView } = usePathView()
+  const [theme, setTheme] = useState<Theme>(getSavedTheme)
   const [adminSection, setAdminSection] =
     useState<AdminSection>('dashboard')
   const adminSession = useAdminSession()
@@ -28,6 +39,10 @@ function App() {
   const canShowAdmin = isAdminRoute && adminSession.isAuthenticated
   const isRedirectingAuthenticatedLogin =
     isAdminLoginRoute && adminSession.isAuthenticated
+
+  useEffect(() => {
+    window.localStorage.setItem(THEME_KEY, theme)
+  }, [theme])
 
   useEffect(() => {
     if (adminSession.isRestoring) {
@@ -55,14 +70,25 @@ function App() {
     return isLoggedIn
   }
 
+  const toggleTheme = () => {
+    setTheme((currentTheme) =>
+      currentTheme === 'dark' ? 'light' : 'dark',
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-[#000000] font-['Inter'] text-[#FFF8E7]">
+    <div
+      className="min-h-screen bg-[#000000] font-['Inter'] text-[#FFF8E7]"
+      data-theme={theme}
+    >
       <AppHeader
         adminTitle={adminTitles[adminSection]}
         currentView={currentView}
         isAuthenticated={adminSession.isAuthenticated}
         onLogout={adminSession.logout}
         onOpenView={openView}
+        onToggleTheme={toggleTheme}
+        theme={theme}
       />
 
       {isAdminAreaRoute &&

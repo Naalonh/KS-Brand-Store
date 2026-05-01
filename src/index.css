@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+[data-theme='light'] [class*="bg-[#000000]"] {
+  background-color: #fff8e7 !important;
+}
+
+[data-theme='light'] [class*="bg-[#130E0D]"] {
+  background-color: #f7ead1 !important;
+}
+
+[data-theme='light'] [class*="text-[#FFF8E7]"] {
+  color: #130e0d !important;
+}
+
+[data-theme='light'] [class*="text-[#B8A98A]"] {
+  color: #6f542a !important;
+}
+
+[data-theme='light'] [class*="text-[#E4B45A]"] {
+  color: #9c6718 !important;
+}
+
+[data-theme='light'] [class*="border-[#9C7A42]"] {
+  border-color: rgba(156, 122, 66, 0.45) !important;
+}
+
+[data-theme='light'] [class*="shadow-[0_30px_90px"] {
+  box-shadow: 0 24px 70px rgba(91, 62, 23, 0.18) !important;
+}
