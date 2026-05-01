@@ -16,19 +16,6 @@ const sizeGroups = [
 export function SizePanel() {
   return (
     <div className="grid gap-6">
-      <section className="rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:p-6">
-        <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-          Size Management
-        </p>
-        <h2 className="mt-2 text-3xl font-black text-[#FFF8E7]">
-          Size guide and presets
-        </h2>
-        <p className="mt-3 max-w-2xl text-[#B8A98A]">
-          Keep common shoe sizes ready for product descriptions and storefront
-          consistency.
-        </p>
-      </section>
-
       <section className="grid gap-4 lg:grid-cols-3">
         {sizeGroups.map((group) => (
           <article
