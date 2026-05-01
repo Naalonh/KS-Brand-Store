@@ -34,130 +34,6 @@ const emptyCrop: CropState = {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
 
-const getVisibleCanvasBounds = (
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-) => {
-  const { data } = context.getImageData(0, 0, width, height)
-  const brightnessThreshold = 28
-  const minimumColumnHits = Math.max(1, Math.floor(height * 0.02))
-  const minimumRowHits = Math.max(1, Math.floor(width * 0.02))
-
-  const isVisiblePixel = (x: number, y: number) => {
-    const index = (y * width + x) * 4
-    return (
-      data[index] + data[index + 1] + data[index + 2] >
-      brightnessThreshold * 3
-    )
-  }
-
-  const columnHasContent = (x: number) => {
-    let hits = 0
-
-    for (let y = 0; y < height; y += 1) {
-      if (isVisiblePixel(x, y)) {
-        hits += 1
-
-        if (hits >= minimumColumnHits) {
-          return true
-        }
-      }
-    }
-
-    return false
-  }
-
-  const rowHasContent = (y: number) => {
-    let hits = 0
-
-    for (let x = 0; x < width; x += 1) {
-      if (isVisiblePixel(x, y)) {
-        hits += 1
-
-        if (hits >= minimumRowHits) {
-          return true
-        }
-      }
-    }
-
-    return false
-  }
-
-  let left = 0
-  let right = width - 1
-  let top = 0
-  let bottom = height - 1
-
-  while (left < right && !columnHasContent(left)) {
-    left += 1
-  }
-
-  while (right > left && !columnHasContent(right)) {
-    right -= 1
-  }
-
-  while (top < bottom && !rowHasContent(top)) {
-    top += 1
-  }
-
-  while (bottom > top && !rowHasContent(bottom)) {
-    bottom -= 1
-  }
-
-  const padding = Math.round(Math.min(width, height) * 0.02)
-  const x = clamp(left - padding, 0, width - 1)
-  const y = clamp(top - padding, 0, height - 1)
-  const trimRight = clamp(right + padding, 0, width - 1)
-  const trimBottom = clamp(bottom + padding, 0, height - 1)
-  const trimWidth = trimRight - x + 1
-  const trimHeight = trimBottom - y + 1
-  const trimsMeaningfully = trimWidth < width * 0.94 || trimHeight < height * 0.94
-
-  if (!trimsMeaningfully || trimWidth < 64 || trimHeight < 64) {
-    return null
-  }
-
-  return { height: trimHeight, width: trimWidth, x, y }
-}
-
-const trimCanvasDarkBorders = (canvas: HTMLCanvasElement) => {
-  const context = canvas.getContext('2d', { willReadFrequently: true })
-
-  if (!context) {
-    return canvas
-  }
-
-  const bounds = getVisibleCanvasBounds(context, canvas.width, canvas.height)
-
-  if (!bounds) {
-    return canvas
-  }
-
-  const trimmedCanvas = document.createElement('canvas')
-  trimmedCanvas.width = bounds.width
-  trimmedCanvas.height = bounds.height
-  const trimmedContext = trimmedCanvas.getContext('2d')
-
-  if (!trimmedContext) {
-    return canvas
-  }
-
-  trimmedContext.drawImage(
-    canvas,
-    bounds.x,
-    bounds.y,
-    bounds.width,
-    bounds.height,
-    0,
-    0,
-    bounds.width,
-    bounds.height,
-  )
-
-  return trimmedCanvas
-}
-
 const blobToDataUrl = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -179,10 +55,9 @@ export function ProductImagePicker({
   imageUrl,
   onChange,
 }: ProductImagePickerProps) {
+  const captureInputRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const [cameraError, setCameraError] = useState('')
   const [cropSource, setCropSource] = useState('')
-  const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
 
@@ -240,8 +115,8 @@ export function ProductImagePicker({
 
         <div className="flex flex-col justify-between gap-4">
           <p className="text-sm leading-6 text-[#B8A98A]">
-            Upload a product photo or capture one with the camera. You can crop
-            the image before it is saved.
+            Upload a product photo or take one from your device camera. You can
+            crop the image before it is saved.
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -256,8 +131,8 @@ export function ProductImagePicker({
             <button
               type="button"
               onClick={() => {
-                setCameraError('')
-                setIsCameraOpen(true)
+                setUploadError('')
+                captureInputRef.current?.click()
               }}
               disabled={isUploading}
               className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-sm font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-5 sm:tracking-[0.12em]"
@@ -269,7 +144,15 @@ export function ProductImagePicker({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <input
+            ref={captureInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
             onChange={handleFileChange}
             className="hidden"
           />
@@ -279,9 +162,9 @@ export function ProductImagePicker({
               Uploading image...
             </p>
           ) : null}
-          {uploadError || cameraError ? (
+          {uploadError ? (
             <p className="rounded-[10px] border border-[#9C7A42]/35 px-4 py-3 text-sm font-semibold text-[#FDD97D]">
-              {uploadError || cameraError}
+              {uploadError}
             </p>
           ) : null}
         </div>
@@ -296,19 +179,6 @@ export function ProductImagePicker({
         />
       ) : null}
 
-      {isCameraOpen ? (
-        <CameraModal
-          onCancel={() => setIsCameraOpen(false)}
-          onCapture={(imageSource) => {
-            setIsCameraOpen(false)
-            setCropSource(imageSource)
-          }}
-          onError={(message) => {
-            setCameraError(message)
-            setIsCameraOpen(false)
-          }}
-        />
-      ) : null}
     </div>
   )
 }
@@ -714,121 +584,6 @@ function ImageCropModal({
             className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-6 text-sm font-black text-[#000000] transition hover:bg-[#FDD97D] disabled:cursor-not-allowed disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
           >
             {isBusy ? 'Saving...' : 'Crop Image'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-type CameraModalProps = {
-  onCancel: () => void
-  onCapture: (imageSource: string) => void
-  onError: (message: string) => void
-}
-
-function CameraModal({ onCancel, onCapture, onError }: CameraModalProps) {
-  const streamRef = useRef<MediaStream | null>(null)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-
-  useEffect(() => {
-    let isMounted = true
-
-    const openCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: 'environment',
-          },
-        })
-
-        if (!isMounted) {
-          stream.getTracks().forEach((track) => track.stop())
-          return
-        }
-
-        streamRef.current = stream
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
-      } catch {
-        onError('Camera access was blocked or is unavailable.')
-      }
-    }
-
-    void openCamera()
-
-    return () => {
-      isMounted = false
-      streamRef.current?.getTracks().forEach((track) => track.stop())
-    }
-  }, [onError])
-
-  const captureFrame = () => {
-    const video = videoRef.current
-
-    if (!video || !video.videoWidth || !video.videoHeight) {
-      return
-    }
-
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    const context = canvas.getContext('2d', { willReadFrequently: true })
-
-    if (!context) {
-      return
-    }
-
-    context.drawImage(video, 0, 0, canvas.width, canvas.height)
-    onCapture(trimCanvasDarkBorders(canvas).toDataURL('image/jpeg', 0.92))
-  }
-
-  return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-[#000000]/80 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-6">
-      <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.75)] sm:max-h-[calc(100vh-3rem)] sm:rounded-3xl sm:p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-              Camera
-            </p>
-            <h3 className="mt-2 text-xl font-black text-[#FFF8E7] sm:text-2xl">
-              Capture product photo
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 text-xl font-black text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
-          >
-            x
-          </button>
-        </div>
-
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          className="mt-6 aspect-video w-full rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] object-cover"
-        />
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-6 text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={captureFrame}
-            className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-6 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
-          >
-            Capture Photo
           </button>
         </div>
       </div>
