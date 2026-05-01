@@ -4,6 +4,7 @@ import type { AdminSection } from './features/admin/components/AdminSidebar'
 import { LoginPage } from './features/auth/components/LoginPage'
 import { useAdminSession } from './features/auth/hooks/useAdminSession'
 import { CartPage } from './features/cart/CartPage'
+import { useCategories } from './features/categories/hooks/useCategories'
 import { MyStorePage } from './features/mystore/MyStorePage'
 import { useProducts } from './features/products/hooks/useProducts'
 import { StorePage } from './features/store/StorePage'
@@ -42,6 +43,7 @@ function App() {
   const [adminSection, setAdminSection] =
     useState<AdminSection>('dashboard')
   const adminSession = useAdminSession()
+  const categoriesState = useCategories(adminSession.accessToken)
   const productsState = useProducts(adminSession.accessToken)
 
   const isAdminRoute = currentView === 'admin'
@@ -134,6 +136,7 @@ function App() {
       ) : canShowAdmin ? (
         <AdminPage
           activeSection={adminSection}
+          categoriesState={categoriesState}
           onSectionChange={setAdminSection}
           productsState={productsState}
         />

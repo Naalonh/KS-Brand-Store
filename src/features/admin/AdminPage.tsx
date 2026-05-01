@@ -1,4 +1,5 @@
 import type { ProductsState } from '../products/hooks/useProducts'
+import type { CategoriesState } from '../categories/hooks/useCategories'
 import { AdminDashboardPanel } from './components/AdminDashboardPanel'
 import { AdminSidebar, type AdminSection } from './components/AdminSidebar'
 import { CategoriesPanel } from './components/CategoriesPanel'
@@ -7,12 +8,14 @@ import { SizePanel } from './components/SizePanel'
 
 type AdminPageProps = {
   activeSection: AdminSection
+  categoriesState: CategoriesState
   onSectionChange: (section: AdminSection) => void
   productsState: ProductsState
 }
 
 export function AdminPage({
   activeSection,
+  categoriesState,
   onSectionChange,
   productsState,
 }: AdminPageProps) {
@@ -37,7 +40,9 @@ export function AdminPage({
               <ProductsPanel productsState={productsState} />
             ) : null}
 
-            {activeSection === 'categories' ? <CategoriesPanel /> : null}
+            {activeSection === 'categories' ? (
+              <CategoriesPanel categoriesState={categoriesState} />
+            ) : null}
 
             {activeSection === 'size' ? <SizePanel /> : null}
           </section>

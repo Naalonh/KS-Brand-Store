@@ -3,8 +3,9 @@
 Run these SQL files in the Supabase SQL editor for project `mefjbzuksuxqybwnjsff`:
 
 1. `supabase/sql/create_products_table.sql`
-2. `supabase/sql/create_sizes_table.sql`
-3. `supabase/sql/create_product_images_bucket.sql`
+2. `supabase/sql/create_categories_table.sql`
+3. `supabase/sql/create_sizes_table.sql`
+4. `supabase/sql/create_product_images_bucket.sql`
 
 The product SQL creates:
 
@@ -12,6 +13,13 @@ The product SQL creates:
 - RLS policies for public active-product reads
 - admin-only insert/update/delete based on `raw_app_meta_data.role = "admin"`
 - starter product rows
+
+The category SQL creates:
+
+- `public.categories`
+- RLS policies for public active-category reads
+- admin-only insert/update/delete based on `raw_app_meta_data.role = "admin"`
+- starter category names for New Arrivals, Sneakers, Court Shoes, and Limited Drops
 
 The size SQL creates:
 

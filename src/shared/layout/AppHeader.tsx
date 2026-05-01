@@ -119,13 +119,6 @@ export function AppHeader({
         <BrandMark onClick={() => onOpenView('store')} />
 
         <nav className="hidden items-center gap-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#B8A98A] md:flex">
-          <button
-            type="button"
-            onClick={() => onOpenView('store')}
-            className="transition hover:text-[#FDD97D]"
-          >
-            {labels.store}
-          </button>
           <a href="#products" className="transition hover:text-[#FDD97D]">
             {labels.collection}
           </a>
