@@ -32,7 +32,7 @@ export function CartPage({
               <img
                 src={featuredProduct.image}
                 alt={`${featuredProduct.name} selected shoe`}
-                className="h-80 w-full object-cover brightness-75 contrast-125 grayscale sepia"
+                className="h-80 w-full object-cover"
               />
               <div className="p-5">
                 <div className="flex items-start justify-between gap-4">

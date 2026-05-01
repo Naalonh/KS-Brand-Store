@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CategoriesState } from '../../categories/hooks/useCategories'
+import { useToast } from '../../../shared/toast/useToast'
 
 type CategoriesPanelProps = {
   categoriesState: CategoriesState
@@ -7,45 +8,116 @@ type CategoriesPanelProps = {
 
 export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const lastErrorToastRef = useRef('')
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    if (!categoriesState.error) {
+      lastErrorToastRef.current = ''
+      return
+    }
+
+    if (lastErrorToastRef.current === categoriesState.error) {
+      return
+    }
+
+    lastErrorToastRef.current = categoriesState.error
+    showToast({
+      message: categoriesState.error,
+      tone: categoriesState.error.includes('not ready yet')
+        ? 'warning'
+        : 'error',
+    })
+  }, [categoriesState.error, showToast])
 
   const closeModal = () => {
     categoriesState.resetForm()
     setIsModalOpen(false)
   }
 
+  const openCreateModal = () => {
+    categoriesState.resetForm()
+    setIsModalOpen(true)
+  }
+
+  const openEditModal: CategoriesState['editCategory'] = (category) => {
+    categoriesState.editCategory(category)
+    setIsModalOpen(true)
+  }
+
   const handleSubmit: CategoriesState['handleSubmit'] = async (event) => {
+    const wasEditing = Boolean(categoriesState.editingId)
     const didSubmit = await categoriesState.handleSubmit(event)
 
     if (didSubmit) {
       closeModal()
+      showToast({
+        message: wasEditing
+          ? 'Category was updated successfully.'
+          : 'Category was added successfully.',
+        tone: 'success',
+      })
     }
 
     return didSubmit
   }
 
+  const toggleCategoryStatus = async (
+    categoryId: string,
+    isActive: boolean,
+  ) => {
+    const didUpdate = await categoriesState.toggleCategoryStatus(categoryId)
+
+    if (didUpdate) {
+      showToast({
+        message: isActive
+          ? 'Category was moved to draft.'
+          : 'Category was published successfully.',
+        tone: 'success',
+      })
+    }
+  }
+
+  const deleteCategory = async (categoryId: string) => {
+    const didDelete = await categoriesState.deleteCategory(categoryId)
+
+    if (didDelete) {
+      showToast({
+        message: 'Category was deleted successfully.',
+        tone: 'success',
+      })
+    }
+  }
+
   return (
     <div className="grid gap-6">
-      <section className="rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:p-6">
+      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
               Category Management
             </p>
-            <h2 className="mt-2 text-3xl font-black text-[#FFF8E7]">
+            <h2 className="mt-2 text-2xl font-black text-[#FFF8E7] sm:text-3xl">
               Store categories
             </h2>
           </div>
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-7 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+            onClick={openCreateModal}
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] sm:w-auto sm:px-7 sm:tracking-[0.14em]"
           >
             Add New Category
           </button>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:p-6">
+      {categoriesState.error ? (
+        <p className="rounded-[10px] border border-[#E46D5A]/45 bg-[#2A0F0A] px-4 py-3 text-sm font-semibold text-[#FFD0C7]">
+          {categoriesState.error}
+        </p>
+      ) : null}
+
+      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
@@ -57,7 +129,66 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
           </span>
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-lg border border-[#9C7A42]/25 bg-[#000000]">
+        {categoriesState.categories.length > 0 ? (
+          <div className="mt-6 grid gap-3 md:hidden">
+            {categoriesState.categories.map((category) => {
+              const statusLabel = category.active ? 'Active' : 'Draft'
+
+              return (
+                <article
+                  key={category.id}
+                  className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-lg font-black text-[#FFF8E7]">
+                        {category.name}
+                      </h3>
+                      <p className="mt-1 text-sm font-black text-[#E4B45A]">
+                        {category.productCount} products
+                      </p>
+                    </div>
+                    <span className="inline-flex min-h-8 shrink-0 items-center justify-center rounded-[10px] border border-[#9C7A42]/45 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A]">
+                      {statusLabel}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(category)}
+                      className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        toggleCategoryStatus(category.id, category.active)
+                      }
+                      className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                    >
+                      {category.active ? 'Draft' : 'Publish'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteCategory(category.id)}
+                      className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="mt-6 rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] px-4 py-8 text-center text-sm font-semibold text-[#B8A98A] md:hidden">
+            No categories yet.
+          </p>
+        )}
+
+        <div className="mt-6 hidden overflow-x-auto rounded-lg border border-[#9C7A42]/25 bg-[#000000] md:block">
           <table className="min-w-[680px] w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-[#9C7A42]/25 text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
@@ -91,8 +222,15 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
+                          onClick={() => openEditModal(category)}
+                          className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
                           onClick={() =>
-                            categoriesState.toggleCategoryStatus(category.id)
+                            toggleCategoryStatus(category.id, category.active)
                           }
                           className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
                         >
@@ -100,9 +238,7 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
                         </button>
                         <button
                           type="button"
-                          onClick={() =>
-                            categoriesState.deleteCategory(category.id)
-                          }
+                          onClick={() => deleteCategory(category.id)}
                           className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
                         >
                           Delete
@@ -130,7 +266,7 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
 
       {isModalOpen ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-[#000000]/75 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-[#000000]/75 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-6"
           role="presentation"
           onMouseDown={closeModal}
         >
@@ -140,16 +276,16 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
             aria-modal="true"
             aria-labelledby="category-modal-title"
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-lg rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.75)] sm:p-6"
+            className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.75)] sm:max-h-[calc(100vh-3rem)] sm:rounded-3xl sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-                  New Category
+                  {categoriesState.editingId ? 'Edit Category' : 'New Category'}
                 </p>
                 <h3
                   id="category-modal-title"
-                  className="mt-2 text-2xl font-black text-[#FFF8E7]"
+                  className="mt-2 text-xl font-black text-[#FFF8E7] sm:text-2xl"
                 >
                   Category details
                 </h3>
@@ -178,6 +314,25 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
               />
             </label>
 
+            <label className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] px-4 py-3">
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+                  Active
+                </span>
+                <span className="mt-1 block text-sm font-semibold text-[#B8A98A]/75">
+                  {categoriesState.form.active ? 'Published' : 'Draft'}
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={categoriesState.form.active}
+                onChange={(event) =>
+                  categoriesState.updateForm('active', event.target.checked)
+                }
+                className="h-5 w-5 accent-[#E4B45A]"
+              />
+            </label>
+
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
@@ -190,7 +345,7 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
                 type="submit"
                 className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-6 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
               >
-                Add Category
+                {categoriesState.editingId ? 'Save Category' : 'Add Category'}
               </button>
             </div>
           </form>

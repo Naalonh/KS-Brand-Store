@@ -40,7 +40,6 @@ const storeText = {
 export function StorePage({
   activeProducts,
   language,
-  onManageProducts,
 }: StorePageProps) {
   const text = storeText[language]
 
@@ -52,7 +51,7 @@ export function StorePage({
             <p className="mb-5 inline-flex rounded-full border border-[#9C7A42]/60 bg-[#130E0D] px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#E4B45A]">
               {text.eyebrow}
             </p>
-            <h1 className="text-5xl font-black leading-[1.02] text-[#FFF8E7] sm:text-6xl lg:text-7xl">
+            <h1 className="text-4xl font-black leading-[1.05] text-[#FFF8E7] min-[380px]:text-5xl sm:text-6xl lg:text-7xl">
               {text.headline}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#B8A98A]">
@@ -82,26 +81,8 @@ export function StorePage({
           id="products"
           className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8"
         >
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
-                {text.productPreview}
-              </p>
-              <h2 className="mt-2 text-3xl font-black text-[#FFF8E7] sm:text-4xl">
-                {text.productTitle}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={onManageProducts}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#E4B45A]/70 bg-[#130E0D] px-5 text-sm font-black uppercase tracking-[0.14em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
-            >
-              {text.manageProducts}
-            </button>
-          </div>
-
           {activeProducts.length > 0 ? (
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-6">
               {activeProducts.map((product) => (
                 <ProductCard
                   key={product.id}

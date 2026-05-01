@@ -13,6 +13,9 @@ import { loadCategories, saveCategories } from '../utils/categoryStorage'
 
 export type CategoriesState = ReturnType<typeof useCategories>
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback
+
 const createCategoryId = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID()
@@ -21,20 +24,27 @@ const createCategoryId = () => {
   return `category-${Date.now()}`
 }
 
-const createDraftCategory = (form: CategoryForm): Category => {
-  const slug = createCategorySlug(form.name)
+const createUniqueCategorySlug = (name: string) => {
+  const suffix = `-${Date.now()}`
+  const maxBaseLength = 63 - suffix.length
+  const slug = createCategorySlug(name).slice(0, maxBaseLength)
 
+  return `${slug.replace(/-$/g, '') || 'category'}${suffix}`
+}
+
+const createDraftCategory = (form: CategoryForm): Category => {
   return {
-    active: false,
+    active: form.active,
     id: createCategoryId(),
     name: form.name,
     productCount: 0,
-    slug: `${slug}-${Date.now()}`,
+    slug: createUniqueCategorySlug(form.name),
   }
 }
 
 export function useCategories(accessToken?: string) {
   const [categories, setCategories] = useState<Category[]>(loadCategories)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [form, setForm] = useState<CategoryForm>(emptyCategoryForm)
   const [isLoading, setIsLoading] = useState(false)
@@ -89,7 +99,7 @@ export function useCategories(accessToken?: string) {
     }
   }, [accessToken])
 
-  const updateForm = (field: keyof CategoryForm, value: string) => {
+  const updateForm = (field: keyof CategoryForm, value: string | boolean) => {
     setForm((currentForm) => ({
       ...currentForm,
       [field]: value,
@@ -98,12 +108,14 @@ export function useCategories(accessToken?: string) {
 
   const resetForm = () => {
     setForm(emptyCategoryForm)
+    setEditingId(null)
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const nextForm = {
+      active: form.active,
       name: form.name.trim(),
     }
 
@@ -117,16 +129,61 @@ export function useCategories(accessToken?: string) {
 
     try {
       if (canUseSupabaseCategories && accessToken) {
-        const createdCategory = await createRemoteCategory(
-          nextCategory,
-          accessToken,
-        )
+        if (editingId) {
+          const currentCategory = categories.find(
+            (category) => category.id === editingId,
+          )
 
-        setCategories((currentCategories) => [
-          createdCategory,
-          ...currentCategories,
-        ])
+          if (!currentCategory) {
+            return false
+          }
+
+          const updatedCategory = await updateRemoteCategory(
+            {
+              ...currentCategory,
+              active: nextForm.active,
+              name: nextForm.name,
+              slug:
+                currentCategory.name === nextForm.name
+                  ? currentCategory.slug
+                  : createUniqueCategorySlug(nextForm.name),
+            },
+            accessToken,
+          )
+
+          setCategories((currentCategories) =>
+            currentCategories.map((category) =>
+              category.id === editingId ? updatedCategory : category,
+            ),
+          )
+        } else {
+          const createdCategory = await createRemoteCategory(
+            nextCategory,
+            accessToken,
+          )
+
+          setCategories((currentCategories) => [
+            createdCategory,
+            ...currentCategories,
+          ])
+        }
         setSource('supabase')
+      } else if (editingId) {
+        setCategories((currentCategories) =>
+          currentCategories.map((category) =>
+            category.id === editingId
+              ? {
+                  ...category,
+                  active: nextForm.active,
+                  name: nextForm.name,
+                  slug:
+                    category.name === nextForm.name
+                      ? category.slug
+                      : createUniqueCategorySlug(nextForm.name),
+                }
+              : category,
+          ),
+        )
       } else {
         setCategories((currentCategories) => [
           nextCategory,
@@ -136,10 +193,20 @@ export function useCategories(accessToken?: string) {
 
       resetForm()
       return true
-    } catch {
-      setError('Could not save this category in Supabase.')
+    } catch (saveError) {
+      setError(
+        getErrorMessage(saveError, 'Could not save this category in Supabase.'),
+      )
       return false
     }
+  }
+
+  const editCategory = (category: Category) => {
+    setEditingId(category.id)
+    setForm({
+      active: category.active,
+      name: category.name,
+    })
   }
 
   const toggleCategoryStatus = async (categoryId: string) => {
@@ -148,7 +215,7 @@ export function useCategories(accessToken?: string) {
     )
 
     if (!category) {
-      return
+      return false
     }
 
     const nextCategory = { ...category, active: !category.active }
@@ -156,7 +223,6 @@ export function useCategories(accessToken?: string) {
     if (canUseSupabaseCategories && accessToken) {
       try {
         const updatedCategory = await updateRemoteCategory(
-          categoryId,
           nextCategory,
           accessToken,
         )
@@ -168,10 +234,15 @@ export function useCategories(accessToken?: string) {
               : currentCategory,
           ),
         )
-        return
-      } catch {
-        setError('Could not update this category in Supabase.')
-        return
+        return true
+      } catch (updateError) {
+        setError(
+          getErrorMessage(
+            updateError,
+            'Could not update this category in Supabase.',
+          ),
+        )
+        return false
       }
     }
 
@@ -180,21 +251,36 @@ export function useCategories(accessToken?: string) {
         currentCategory.id === categoryId ? nextCategory : currentCategory,
       ),
     )
+    return true
   }
 
   const deleteCategory = async (categoryId: string) => {
+    const category = categories.find(
+      (currentCategory) => currentCategory.id === categoryId,
+    )
+
+    if (!category) {
+      return false
+    }
+
     if (canUseSupabaseCategories && accessToken) {
       try {
-        await deleteRemoteCategory(categoryId, accessToken)
-      } catch {
-        setError('Could not delete this category in Supabase.')
-        return
+        await deleteRemoteCategory(category, accessToken)
+      } catch (deleteError) {
+        setError(
+          getErrorMessage(
+            deleteError,
+            'Could not delete this category in Supabase.',
+          ),
+        )
+        return false
       }
     }
 
     setCategories((currentCategories) =>
       currentCategories.filter((category) => category.id !== categoryId),
     )
+    return true
   }
 
   const restoreDefaults = () => {
@@ -206,6 +292,8 @@ export function useCategories(accessToken?: string) {
   return {
     categories,
     deleteCategory,
+    editCategory,
+    editingId,
     error,
     form,
     handleSubmit,

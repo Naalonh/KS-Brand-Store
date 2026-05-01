@@ -11,6 +11,8 @@ type CategoryRow = {
 }
 
 const categorySelect = 'id,slug,name,product_count,active'
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 const mapCategoryRow = (row: CategoryRow): Category => ({
   active: row.active,
@@ -26,6 +28,21 @@ const mapCategoryPayload = (category: Category) => ({
   product_count: category.productCount,
   slug: category.slug,
 })
+
+const requireCategoryRow = (rows: CategoryRow[], action: string) => {
+  const row = rows[0]
+
+  if (!row) {
+    throw new Error(`Supabase did not ${action} this category.`)
+  }
+
+  return row
+}
+
+const getCategoryFilter = (category: Pick<Category, 'id' | 'slug'>) =>
+  uuidPattern.test(category.id)
+    ? `id=eq.${encodeURIComponent(category.id)}`
+    : `slug=eq.${encodeURIComponent(category.slug)}`
 
 export const canUseSupabaseCategories = isSupabaseConfigured
 
@@ -49,16 +66,15 @@ export async function createRemoteCategory(
     prefer: 'return=representation',
   })
 
-  return mapCategoryRow(rows[0])
+  return mapCategoryRow(requireCategoryRow(rows, 'create'))
 }
 
 export async function updateRemoteCategory(
-  categoryId: string,
   category: Category,
   accessToken: string,
 ) {
   const rows = await supabaseFetch<CategoryRow[]>(
-    `/rest/v1/categories?id=eq.${encodeURIComponent(categoryId)}&select=${categorySelect}`,
+    `/rest/v1/categories?${getCategoryFilter(category)}&select=${categorySelect}`,
     {
       accessToken,
       body: mapCategoryPayload(category),
@@ -67,19 +83,21 @@ export async function updateRemoteCategory(
     },
   )
 
-  return mapCategoryRow(rows[0])
+  return mapCategoryRow(requireCategoryRow(rows, 'update'))
 }
 
 export async function deleteRemoteCategory(
-  categoryId: string,
+  category: Pick<Category, 'id' | 'slug'>,
   accessToken: string,
 ) {
-  await supabaseFetch<null>(
-    `/rest/v1/categories?id=eq.${encodeURIComponent(categoryId)}`,
+  const rows = await supabaseFetch<CategoryRow[]>(
+    `/rest/v1/categories?${getCategoryFilter(category)}&select=${categorySelect}`,
     {
       accessToken,
       method: 'DELETE',
-      prefer: 'return=minimal',
+      prefer: 'return=representation',
     },
   )
+
+  requireCategoryRow(rows, 'delete')
 }

@@ -84,7 +84,7 @@ export function MyStorePage({
               <img
                 src={featuredProduct.image}
                 alt={`${featuredProduct.name} featured shoe`}
-                className="h-80 w-full object-cover brightness-75 contrast-125 grayscale sepia"
+                className="h-80 w-full object-cover"
               />
               <div className="flex items-end justify-between gap-4 p-5">
                 <div>
@@ -110,7 +110,7 @@ export function MyStorePage({
                   <img
                     src={product.image}
                     alt={`${product.name} shoe`}
-                    className="h-40 w-full object-cover brightness-75 contrast-125 grayscale sepia"
+                    className="h-40 w-full object-cover"
                     loading="lazy"
                   />
                   <div className="p-4">

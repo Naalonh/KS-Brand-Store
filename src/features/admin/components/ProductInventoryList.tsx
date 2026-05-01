@@ -3,9 +3,9 @@ import type { Product } from '../../products/types'
 export type ProductViewMode = 'grid' | 'list'
 
 type ProductInventoryListProps = {
-  onDelete: (productId: string) => void
+  onDelete: (productId: string) => void | Promise<void>
   onEdit: (product: Product) => void
-  onToggleStatus: (productId: string) => void
+  onToggleStatus: (productId: string) => void | Promise<void>
   products: Product[]
   viewMode: ProductViewMode
 }
@@ -18,13 +18,13 @@ export function ProductInventoryList({
   viewMode,
 }: ProductInventoryListProps) {
   return (
-    <section className="rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:p-6">
+    <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
             Inventory
           </p>
-          <h2 className="mt-2 text-2xl font-black text-[#FFF8E7]">
+          <h2 className="mt-2 text-xl font-black text-[#FFF8E7] sm:text-2xl">
             Product List
           </h2>
         </div>
@@ -47,7 +47,7 @@ export function ProductInventoryList({
               <img
                 src={product.image}
                 alt={`${product.name} product`}
-                className="h-52 w-full object-cover brightness-75 contrast-125 grayscale sepia"
+                className="h-52 w-full object-cover"
               />
               <div className="grid gap-4 p-4">
                 <div>
@@ -77,7 +77,64 @@ export function ProductInventoryList({
           ))}
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-[10px] border border-[#9C7A42]/25 bg-[#000000]">
+        <>
+          <div className="mt-6 grid gap-3 md:hidden">
+            {products.map((product) => (
+              <article
+                key={product.id}
+                className="overflow-hidden rounded-[10px] border border-[#9C7A42]/25 bg-[#000000]"
+              >
+                <img
+                  src={product.image}
+                  alt={`${product.name} product`}
+                  className="h-44 w-full object-cover"
+                />
+                <div className="grid gap-4 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words text-lg font-black text-[#FFF8E7]">
+                        {product.name}
+                      </h3>
+                      <p className="mt-1 text-sm font-semibold text-[#B8A98A]">
+                        {product.tag}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-[10px] border border-[#9C7A42]/40 px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A]">
+                      {product.active ? 'Active' : 'Hidden'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-sm font-semibold text-[#B8A98A]">
+                    <div className="rounded-[10px] border border-[#9C7A42]/25 p-3">
+                      <span className="block text-xs font-black uppercase tracking-[0.12em] text-[#9C7A42]">
+                        Sizes
+                      </span>
+                      <span className="mt-1 block break-words text-[#FFF8E7]">
+                        {product.sizes}
+                      </span>
+                    </div>
+                    <div className="rounded-[10px] border border-[#9C7A42]/25 p-3">
+                      <span className="block text-xs font-black uppercase tracking-[0.12em] text-[#9C7A42]">
+                        Price
+                      </span>
+                      <span className="mt-1 block font-black text-[#E4B45A]">
+                        {product.price}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ProductActions
+                    product={product}
+                    onDelete={onDelete}
+                    onEdit={onEdit}
+                    onToggleStatus={onToggleStatus}
+                  />
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-6 hidden overflow-x-auto rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] md:block">
           <table className="w-full min-w-[920px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#9C7A42]/25 text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
@@ -100,7 +157,7 @@ export function ProductInventoryList({
                       <img
                         src={product.image}
                         alt={`${product.name} product`}
-                        className="h-16 w-16 rounded-[10px] object-cover brightness-75 contrast-125 grayscale sepia"
+                        className="h-16 w-16 rounded-[10px] object-cover"
                       />
                       <span className="text-base font-black text-[#FFF8E7]">
                         {product.name}
@@ -136,15 +193,16 @@ export function ProductInventoryList({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </section>
   )
 }
 
 type ProductActionsProps = {
-  onDelete: (productId: string) => void
+  onDelete: (productId: string) => void | Promise<void>
   onEdit: (product: Product) => void
-  onToggleStatus: (productId: string) => void
+  onToggleStatus: (productId: string) => void | Promise<void>
   product: Product
 }
 
@@ -159,21 +217,21 @@ function ProductActions({
       <button
         type="button"
         onClick={() => onEdit(product)}
-        className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+        className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-4 sm:tracking-[0.12em]"
       >
         Edit
       </button>
       <button
         type="button"
         onClick={() => onToggleStatus(product.id)}
-        className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+        className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-4 sm:tracking-[0.12em]"
       >
         {product.active ? 'Hide' : 'Show'}
       </button>
       <button
         type="button"
         onClick={() => onDelete(product.id)}
-        className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+        className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-4 sm:tracking-[0.12em]"
       >
         Delete
       </button>

@@ -26,9 +26,9 @@ export function AdminPage({
 }: AdminPageProps) {
   return (
     <>
-      <main className="mt-[15px] w-full px-0 pb-10 pt-0 lg:pl-64">
-        <div className="m-[15px] max-w-none">
-          <section className="grid gap-6">
+      <main className="mt-3 w-full px-0 pb-8 pt-0 lg:mt-[15px] lg:pl-64">
+        <div className="mx-3 max-w-none sm:mx-[15px]">
+          <section className="grid gap-4 sm:gap-6">
             <AdminSidebar
               activeSection={activeSection}
               onSectionChange={onSectionChange}
@@ -42,7 +42,10 @@ export function AdminPage({
             ) : null}
 
             {activeSection === 'products' ? (
-              <ProductsPanel productsState={productsState} />
+              <ProductsPanel
+                productsState={productsState}
+                sizesState={sizesState}
+              />
             ) : null}
 
             {activeSection === 'orders' ? (

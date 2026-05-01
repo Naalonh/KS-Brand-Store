@@ -13,6 +13,8 @@ type ProductRow = {
 }
 
 const productSelect = 'id,name,price,sizes,tag,image_url,active'
+export const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 const mapProductRow = (row: ProductRow): Product => ({
   active: row.active,
@@ -32,6 +34,16 @@ const mapProductForm = (product: ProductForm) => ({
   sizes: product.sizes,
   tag: product.tag,
 })
+
+const requireProductRow = (rows: ProductRow[], action: string) => {
+  const row = rows[0]
+
+  if (!row) {
+    throw new Error(`Supabase did not ${action} this product.`)
+  }
+
+  return row
+}
 
 export const canUseSupabaseProducts = isSupabaseConfigured
 
@@ -55,7 +67,7 @@ export async function createRemoteProduct(
     prefer: 'return=representation',
   })
 
-  return mapProductRow(rows[0])
+  return mapProductRow(requireProductRow(rows, 'create'))
 }
 
 export async function updateRemoteProduct(
@@ -73,16 +85,18 @@ export async function updateRemoteProduct(
     },
   )
 
-  return mapProductRow(rows[0])
+  return mapProductRow(requireProductRow(rows, 'update'))
 }
 
 export async function deleteRemoteProduct(productId: string, accessToken: string) {
-  await supabaseFetch<null>(
-    `/rest/v1/products?id=eq.${encodeURIComponent(productId)}`,
+  const rows = await supabaseFetch<ProductRow[]>(
+    `/rest/v1/products?id=eq.${encodeURIComponent(productId)}&select=${productSelect}`,
     {
       accessToken,
       method: 'DELETE',
-      prefer: 'return=minimal',
+      prefer: 'return=representation',
     },
   )
+
+  requireProductRow(rows, 'delete')
 }

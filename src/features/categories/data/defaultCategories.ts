@@ -32,5 +32,6 @@ export const defaultCategories: Category[] = [
 ]
 
 export const emptyCategoryForm: CategoryForm = {
+  active: true,
   name: '',
 }

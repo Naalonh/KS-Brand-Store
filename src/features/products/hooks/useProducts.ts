@@ -7,6 +7,7 @@ import {
   deleteRemoteProduct,
   fetchProducts,
   updateRemoteProduct,
+  uuidPattern,
 } from '../services/productsRepository'
 import type { Product, ProductForm } from '../types'
 import { loadProducts, saveProducts } from '../utils/productStorage'
@@ -52,7 +53,7 @@ export function useProducts(accessToken?: string) {
           return
         }
 
-        setProducts(remoteProducts.length > 0 ? remoteProducts : defaultProducts)
+        setProducts(remoteProducts)
         setSource('supabase')
       } catch {
         if (!isMounted) {
@@ -114,28 +115,31 @@ export function useProducts(accessToken?: string) {
     setError('')
 
     try {
-      if (canUseSupabaseProducts && accessToken) {
-        if (editingId) {
-          const updatedProduct = await updateRemoteProduct(
-            editingId,
-            nextProduct,
-            accessToken,
-          )
+      if (
+        editingId &&
+        canUseSupabaseProducts &&
+        accessToken &&
+        uuidPattern.test(editingId)
+      ) {
+        const updatedProduct = await updateRemoteProduct(
+          editingId,
+          nextProduct,
+          accessToken,
+        )
 
-          setProducts((currentProducts) =>
-            currentProducts.map((product) =>
-              product.id === editingId ? updatedProduct : product,
-            ),
-          )
-        } else {
-          const createdProduct = await createRemoteProduct(
-            nextProduct,
-            accessToken,
-          )
+        setProducts((currentProducts) =>
+          currentProducts.map((product) =>
+            product.id === editingId ? updatedProduct : product,
+          ),
+        )
+        setSource('supabase')
+      } else if (canUseSupabaseProducts && accessToken && !editingId) {
+        const createdProduct = await createRemoteProduct(
+          nextProduct,
+          accessToken,
+        )
 
-          setProducts((currentProducts) => [createdProduct, ...currentProducts])
-        }
-
+        setProducts((currentProducts) => [createdProduct, ...currentProducts])
         setSource('supabase')
       } else if (editingId) {
         setProducts((currentProducts) =>
@@ -176,12 +180,14 @@ export function useProducts(accessToken?: string) {
     )
 
     if (!product) {
-      return
+      return false
     }
 
     const nextProduct = { ...product, active: !product.active }
 
-    if (canUseSupabaseProducts && accessToken) {
+    setError('')
+
+    if (canUseSupabaseProducts && accessToken && uuidPattern.test(productId)) {
       try {
         const updatedProduct = await updateRemoteProduct(
           productId,
@@ -201,10 +207,10 @@ export function useProducts(accessToken?: string) {
             currentProduct.id === productId ? updatedProduct : currentProduct,
           ),
         )
-        return
+        return true
       } catch {
         setError('Could not update this product in Supabase.')
-        return
+        return false
       }
     }
 
@@ -215,15 +221,18 @@ export function useProducts(accessToken?: string) {
           : currentProduct,
       ),
     )
+    return true
   }
 
   const deleteProduct = async (productId: string) => {
-    if (canUseSupabaseProducts && accessToken) {
+    setError('')
+
+    if (canUseSupabaseProducts && accessToken && uuidPattern.test(productId)) {
       try {
         await deleteRemoteProduct(productId, accessToken)
       } catch {
         setError('Could not delete this product in Supabase.')
-        return
+        return false
       }
     }
 
@@ -234,6 +243,7 @@ export function useProducts(accessToken?: string) {
     if (editingId === productId) {
       resetForm()
     }
+    return true
   }
 
   const restoreDefaults = () => {

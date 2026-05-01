@@ -1,11 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ProductsState } from '../../products/hooks/useProducts'
+import type { SizesState } from '../../sizes/hooks/useSizes'
 import type { Product } from '../../products/types'
+import { useToast } from '../../../shared/toast/useToast'
 import { ProductFormPanel } from './ProductFormPanel'
 import { ProductInventoryList, type ProductViewMode } from './ProductInventoryList'
 
 type ProductsPanelProps = {
   productsState: ProductsState
+  sizesState: SizesState
 }
 
 const matchesSearch = (product: Product, searchTerm: string) => {
@@ -21,11 +24,35 @@ const matchesSearch = (product: Product, searchTerm: string) => {
     .includes(normalizedSearch)
 }
 
-export function ProductsPanel({ productsState }: ProductsPanelProps) {
+export function ProductsPanel({
+  productsState,
+  sizesState,
+}: ProductsPanelProps) {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<ProductViewMode>('list')
+  const lastErrorToastRef = useRef('')
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    if (!productsState.error) {
+      lastErrorToastRef.current = ''
+      return
+    }
+
+    if (lastErrorToastRef.current === productsState.error) {
+      return
+    }
+
+    lastErrorToastRef.current = productsState.error
+    showToast({
+      message: productsState.error,
+      tone: productsState.error.includes('not ready yet')
+        ? 'warning'
+        : 'error',
+    })
+  }, [productsState.error, showToast])
 
   const categoryOptions = useMemo(
     () =>
@@ -64,22 +91,49 @@ export function ProductsPanel({ productsState }: ProductsPanelProps) {
     setIsProductModalOpen(true)
   }
 
+  const toggleProductStatus = async (productId: string) => {
+    const product = productsState.products.find(
+      (currentProduct) => currentProduct.id === productId,
+    )
+    const didUpdate = await productsState.toggleProductStatus(productId)
+
+    if (didUpdate && product) {
+      showToast({
+        message: product.active
+          ? 'Product was hidden successfully.'
+          : 'Product was shown successfully.',
+        tone: 'success',
+      })
+    }
+  }
+
+  const deleteProduct = async (productId: string) => {
+    const didDelete = await productsState.deleteProduct(productId)
+
+    if (didDelete) {
+      showToast({
+        message: 'Product was deleted successfully.',
+        tone: 'success',
+      })
+    }
+  }
+
   return (
     <div className="grid gap-6">
-      <section className="rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:p-6">
+      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
               Products
             </p>
-            <h2 className="mt-2 text-3xl font-black text-[#FFF8E7]">
+            <h2 className="mt-2 text-2xl font-black text-[#FFF8E7] sm:text-3xl">
               Product inventory
             </h2>
           </div>
           <button
             type="button"
             onClick={openNewProductModal}
-            className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-7 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] sm:w-auto sm:px-7 sm:tracking-[0.14em]"
           >
             Add New Product
           </button>
@@ -148,15 +202,15 @@ export function ProductsPanel({ productsState }: ProductsPanelProps) {
 
       <ProductInventoryList
         products={filteredProducts}
-        onDelete={productsState.deleteProduct}
+        onDelete={deleteProduct}
         onEdit={openEditProductModal}
-        onToggleStatus={productsState.toggleProductStatus}
+        onToggleStatus={toggleProductStatus}
         viewMode={viewMode}
       />
 
       {isProductModalOpen ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-[#000000]/75 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-[#000000]/75 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-6"
           role="presentation"
           onMouseDown={closeProductModal}
         >
@@ -165,10 +219,11 @@ export function ProductsPanel({ productsState }: ProductsPanelProps) {
             aria-modal="true"
             aria-label="Product details"
             onMouseDown={(event) => event.stopPropagation()}
-            className="max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-y-auto"
+            className="max-h-[calc(100vh-1.5rem)] w-full max-w-3xl overflow-y-auto sm:max-h-[calc(100vh-3rem)]"
           >
             <ProductFormPanel
               productsState={productsState}
+              sizesState={sizesState}
               onCancel={closeProductModal}
               onSubmitted={() => setIsProductModalOpen(false)}
             />

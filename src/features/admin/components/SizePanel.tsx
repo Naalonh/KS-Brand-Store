@@ -74,27 +74,27 @@ export function SizePanel({ sizesState }: SizePanelProps) {
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:p-6">
+      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
               Size Management
             </p>
-            <h2 className="mt-2 text-3xl font-black text-[#FFF8E7]">
+            <h2 className="mt-2 text-2xl font-black text-[#FFF8E7] sm:text-3xl">
               Product sizes
             </h2>
           </div>
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-7 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] sm:w-auto sm:px-7 sm:tracking-[0.14em]"
           >
             Add New Size
           </button>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:p-6">
+      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
@@ -106,7 +106,54 @@ export function SizePanel({ sizesState }: SizePanelProps) {
           </span>
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-lg border border-[#9C7A42]/25 bg-[#000000]">
+        {sizesState.sizes.length > 0 ? (
+          <div className="mt-6 grid gap-3 md:hidden">
+            {sizesState.sizes.map((size) => {
+              const statusLabel = size.active ? 'Active' : 'Disabled'
+
+              return (
+                <article
+                  key={size.id}
+                  className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="min-w-0 break-words text-lg font-black text-[#FFF8E7]">
+                      {size.name}
+                    </h3>
+                    <span className="inline-flex min-h-8 shrink-0 items-center justify-center rounded-[10px] border border-[#9C7A42]/45 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A]">
+                      {statusLabel}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        toggleSizeStatus(size.id, size.active)
+                      }
+                      className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                    >
+                      {size.active ? 'Disable' : 'Activate'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteSize(size.id)}
+                      className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="mt-6 rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] px-4 py-8 text-center text-sm font-semibold text-[#B8A98A] md:hidden">
+            No sizes yet.
+          </p>
+        )}
+
+        <div className="mt-6 hidden overflow-x-auto rounded-lg border border-[#9C7A42]/25 bg-[#000000] md:block">
           <table className="min-w-[620px] w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-[#9C7A42]/25 text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
@@ -173,7 +220,7 @@ export function SizePanel({ sizesState }: SizePanelProps) {
 
       {isModalOpen ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-[#000000]/75 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-[#000000]/75 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-6"
           role="presentation"
           onMouseDown={closeModal}
         >
@@ -183,7 +230,7 @@ export function SizePanel({ sizesState }: SizePanelProps) {
             aria-modal="true"
             aria-labelledby="size-modal-title"
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-lg rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.75)] sm:p-6"
+            className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.75)] sm:max-h-[calc(100vh-3rem)] sm:rounded-3xl sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -192,7 +239,7 @@ export function SizePanel({ sizesState }: SizePanelProps) {
                 </p>
                 <h3
                   id="size-modal-title"
-                  className="mt-2 text-2xl font-black text-[#FFF8E7]"
+                  className="mt-2 text-xl font-black text-[#FFF8E7] sm:text-2xl"
                 >
                   Size details
                 </h3>

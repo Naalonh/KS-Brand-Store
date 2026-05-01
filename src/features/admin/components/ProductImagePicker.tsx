@@ -223,13 +223,13 @@ export function ProductImagePicker({
         Product Image
       </span>
 
-      <div className="grid gap-4 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] p-4 md:grid-cols-[12rem_1fr]">
+      <div className="grid gap-4 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] p-3 sm:p-4 md:grid-cols-[12rem_1fr]">
         <div className="aspect-square overflow-hidden rounded-[10px] border border-[#9C7A42]/25 bg-[#130E0D]">
           {imageUrl ? (
             <img
               src={imageUrl}
               alt="Selected product"
-              className="h-full w-full object-cover brightness-75 contrast-125 grayscale sepia"
+              className="h-full w-full object-cover"
             />
           ) : (
             <div className="grid h-full place-items-center px-4 text-center text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A]">
@@ -249,7 +249,7 @@ export function ProductImagePicker({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-5 text-sm font-black uppercase tracking-[0.12em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-sm font-black uppercase tracking-[0.1em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-5 sm:tracking-[0.12em]"
             >
               Upload Image
             </button>
@@ -260,7 +260,7 @@ export function ProductImagePicker({
                 setIsCameraOpen(true)
               }}
               disabled={isUploading}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-5 text-sm font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-sm font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-5 sm:tracking-[0.12em]"
             >
               Capture
             </button>
@@ -544,15 +544,15 @@ function ImageCropModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-[#000000]/80 px-4 py-6 backdrop-blur-sm">
-      <div className="w-full max-w-3xl overflow-hidden rounded-[22px] border border-[#9C7A42]/35 bg-[#130E0D] shadow-[0_30px_90px_rgba(0,0,0,0.75)]">
-        <div className="flex min-h-20 items-center justify-between gap-4 border-b border-[#9C7A42]/25 px-5 py-4">
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-[#000000]/80 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-6">
+      <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] shadow-[0_30px_90px_rgba(0,0,0,0.75)] sm:max-h-[calc(100vh-3rem)] sm:rounded-[22px]">
+        <div className="flex min-h-16 items-center justify-between gap-3 border-b border-[#9C7A42]/25 px-4 py-3 sm:min-h-20 sm:gap-4 sm:px-5 sm:py-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border border-[#E4B45A]/35 bg-[#000000] text-lg font-black text-[#E4B45A]">
               +
             </span>
             <div className="min-w-0">
-              <h3 className="text-xl font-black text-[#FFF8E7]">Crop Image</h3>
+              <h3 className="text-lg font-black text-[#FFF8E7] sm:text-xl">Crop Image</h3>
               <p className="mt-1 text-sm font-semibold text-[#B8A98A]">
                 Square product selection
               </p>
@@ -606,7 +606,7 @@ function ImageCropModal({
           </span>
         </div>
 
-        <div className="grid gap-4 px-5 py-5">
+        <div className="grid gap-4 px-4 py-4 sm:px-5 sm:py-5">
           <div
             ref={previewRef}
             className="relative mx-auto max-h-[54vh] w-full max-w-[calc(54vh*var(--image-ratio))] overflow-hidden border border-[#9C7A42]/35 bg-[#000000]"
@@ -698,7 +698,7 @@ function ImageCropModal({
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-[#9C7A42]/25 px-5 py-4 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 border-t border-[#9C7A42]/25 px-4 py-4 sm:flex-row sm:justify-end sm:px-5">
           <button
             type="button"
             onClick={onCancel}
@@ -787,14 +787,14 @@ function CameraModal({ onCancel, onCapture, onError }: CameraModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-[#000000]/80 px-4 py-6 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.75)] sm:p-6">
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-[#000000]/80 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-6">
+      <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.75)] sm:max-h-[calc(100vh-3rem)] sm:rounded-3xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
               Camera
             </p>
-            <h3 className="mt-2 text-2xl font-black text-[#FFF8E7]">
+            <h3 className="mt-2 text-xl font-black text-[#FFF8E7] sm:text-2xl">
               Capture product photo
             </h3>
           </div>

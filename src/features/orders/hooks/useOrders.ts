@@ -138,17 +138,31 @@ export function useOrders(products: Product[]) {
   }
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    const order = orders.find((currentOrder) => currentOrder.id === orderId)
+
+    if (!order || order.status === status) {
+      return false
+    }
+
     setOrders((currentOrders) =>
       currentOrders.map((order) =>
         order.id === orderId ? { ...order, status } : order,
       ),
     )
+    return true
   }
 
   const deleteOrder = (orderId: string) => {
+    const order = orders.find((currentOrder) => currentOrder.id === orderId)
+
+    if (!order) {
+      return false
+    }
+
     setOrders((currentOrders) =>
       currentOrders.filter((order) => order.id !== orderId),
     )
+    return true
   }
 
   return {

@@ -25,7 +25,7 @@ export function ProductCard({ language, product }: ProductCardProps) {
         <img
           src={product.image}
           alt={`${product.name} shoe`}
-          className="h-40 w-full object-cover brightness-75 contrast-125 grayscale sepia sm:h-64 lg:h-56 xl:h-64"
+          className="h-60 w-full object-cover sm:h-64 lg:h-56 xl:h-64"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-[#000000]/20"></div>

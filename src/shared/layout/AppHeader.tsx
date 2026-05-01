@@ -86,16 +86,20 @@ export function AppHeader({
   if (currentView === 'admin' || currentView === 'adminLogin') {
     return (
       <header className="sticky top-0 z-20 border-b border-[#9C7A42]/25 bg-[#130E0D]/95 backdrop-blur">
-        <div className="flex min-h-20 w-full items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:pl-[18rem] lg:pr-8">
-          <p className="min-w-0 truncate text-sm font-black uppercase tracking-[0.16em] text-[#E4B45A] sm:text-base">
+        <div className="flex w-full flex-col gap-2 px-3 py-2 sm:min-h-20 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-3 lg:pl-[18rem] lg:pr-8">
+          <p className="min-w-0 truncate text-xs font-black uppercase tracking-[0.12em] text-[#E4B45A] sm:text-base sm:tracking-[0.16em]">
             {adminTitle}
           </p>
-          <div className="flex shrink-0 items-center gap-2">
+          <div
+            className={`grid gap-2 sm:flex sm:shrink-0 sm:items-center ${
+              isAuthenticated ? 'grid-cols-2' : 'grid-cols-1'
+            }`}
+          >
             {isAuthenticated ? (
               <button
                 type="button"
                 onClick={onLogout}
-                className="inline-flex min-h-10 items-center justify-center rounded-[10px] border border-[#9C7A42]/70 bg-[#130E0D] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:min-h-11 sm:px-5 sm:text-sm"
+                className="inline-flex min-h-9 items-center justify-center rounded-[10px] border border-[#9C7A42]/70 bg-[#130E0D] px-3 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:min-h-11 sm:px-5 sm:text-sm sm:tracking-[0.12em]"
               >
                 Logout
               </button>
@@ -103,7 +107,7 @@ export function AppHeader({
             <button
               type="button"
               onClick={() => onOpenView('store')}
-              className="inline-flex min-h-10 items-center justify-center rounded-[10px] border border-[#E4B45A]/70 bg-[#E4B45A] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#000000] shadow-[0_0_30px_rgba(228,180,90,0.2)] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:min-h-11 sm:px-5 sm:text-sm"
+              className="inline-flex min-h-9 items-center justify-center rounded-[10px] border border-[#E4B45A]/70 bg-[#E4B45A] px-3 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#000000] shadow-[0_0_30px_rgba(228,180,90,0.2)] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:min-h-11 sm:px-5 sm:text-sm sm:tracking-[0.12em]"
             >
               Back to Site
             </button>

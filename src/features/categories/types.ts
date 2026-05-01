@@ -6,4 +6,4 @@ export type Category = {
   slug: string
 }
 
-export type CategoryForm = Pick<Category, 'name'>
+export type CategoryForm = Pick<Category, 'active' | 'name'>
