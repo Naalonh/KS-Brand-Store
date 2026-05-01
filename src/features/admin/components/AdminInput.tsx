@@ -13,9 +13,11 @@ export function AdminInput({
 }: AdminInputProps) {
   return (
     <label className="grid gap-2">
-      <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
-        {label}
-      </span>
+      {label ? (
+        <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+          {label}
+        </span>
+      ) : null}
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}

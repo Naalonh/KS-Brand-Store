@@ -43,6 +43,7 @@ export function AdminPage({
 
             {activeSection === 'products' ? (
               <ProductsPanel
+                categoriesState={categoriesState}
                 productsState={productsState}
                 sizesState={sizesState}
               />

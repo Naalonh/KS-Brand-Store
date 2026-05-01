@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { Footer } from '../../shared/layout/Footer'
 import type { Product } from '../products/types'
 import { ProductCard } from './components/ProductCard'
+import bannerImage from '../../../banner.png'
 
 type StorePageProps = {
   activeProducts: Product[]
   language: 'en' | 'km'
+  onAddToCart: (product: Product, quantity: number, size: string) => void
   onManageProducts: () => void
 }
 
@@ -37,44 +40,104 @@ const storeText = {
   },
 }
 
+const formatPrice = (price: string) => {
+  const trimmedPrice = price.trim()
+
+  if (!trimmedPrice) {
+    return ''
+  }
+
+  return trimmedPrice.includes('$') ? trimmedPrice : `${trimmedPrice}$`
+}
+
+const getPriceValue = (price: string) => {
+  const value = Number(price.replace(/[^0-9.]/g, ''))
+
+  return Number.isFinite(value) ? value : 0
+}
+
+const formatTotalPrice = (unitPrice: string, quantity: number) => {
+  const value = getPriceValue(unitPrice)
+
+  if (value <= 0) {
+    return formatPrice(unitPrice)
+  }
+
+  return `${Number((value * quantity).toFixed(2))}$`
+}
+
+const getProductSizes = (sizes: string) =>
+  sizes
+    .split(',')
+    .map((size) => size.trim())
+    .filter(Boolean)
+
+const productsPerPage = 30
+const getPageNumbers = (currentPage: number, totalPages: number) => {
+  const startPage = Math.max(Math.min(currentPage - 1, totalPages - 2), 1)
+  const endPage = Math.min(startPage + 2, totalPages)
+
+  return Array.from(
+    { length: endPage - startPage + 1 },
+    (_, index) => startPage + index,
+  )
+}
+
 export function StorePage({
   activeProducts,
   language,
+  onAddToCart,
 }: StorePageProps) {
   const text = storeText[language]
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedQuantity, setSelectedQuantity] = useState(1)
+  const [selectedSize, setSelectedSize] = useState('')
+  const totalPages = Math.max(
+    Math.ceil(activeProducts.length / productsPerPage),
+    1,
+  )
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const pageStartIndex = (safeCurrentPage - 1) * productsPerPage
+  const pageEndIndex = Math.min(
+    pageStartIndex + productsPerPage,
+    activeProducts.length,
+  )
+  const pageNumbers = getPageNumbers(safeCurrentPage, totalPages)
+  const visibleProducts = activeProducts.slice(pageStartIndex, pageEndIndex)
+  const showingStart = activeProducts.length > 0 ? pageStartIndex + 1 : 0
+
+  const openProductDetails = (product: Product) => {
+    const productSizes = getProductSizes(product.sizes)
+
+    setSelectedSize(productSizes[0] ?? '')
+    setSelectedQuantity(1)
+    setSelectedProduct(product)
+  }
+
+  const selectedProductSizes = selectedProduct
+    ? getProductSizes(selectedProduct.sizes)
+    : []
+  const selectedProductUnitPrice =
+    selectedProduct?.discountPrice?.trim() || selectedProduct?.price || ''
+  const addSelectedProductToCart = () => {
+    if (!selectedProduct) {
+      return
+    }
+
+    onAddToCart(selectedProduct, selectedQuantity, selectedSize)
+    setSelectedProduct(null)
+  }
 
   return (
     <>
       <main>
-        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-24">
-          <div className="max-w-2xl">
-            <p className="mb-5 inline-flex rounded-full border border-[#9C7A42]/60 bg-[#130E0D] px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#E4B45A]">
-              {text.eyebrow}
-            </p>
-            <h1 className="text-4xl font-black leading-[1.05] text-[#FFF8E7] min-[380px]:text-5xl sm:text-6xl lg:text-7xl">
-              {text.headline}
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-[#B8A98A]">
-              {text.intro}
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="https://m.me/ksbrandstore"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#E4B45A] px-7 text-sm font-black uppercase tracking-[0.14em] text-[#000000] shadow-[0_0_40px_rgba(228,180,90,0.22)] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
-              >
-                {text.order}
-              </a>
-              <a
-                href="#products"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#9C7A42]/70 bg-[#130E0D] px-7 text-sm font-black uppercase tracking-[0.14em] text-[#FFF8E7] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
-              >
-                {text.viewCollection}
-              </a>
-            </div>
-          </div>
+        <section className="mx-auto max-w-7xl px-4 pb-6 pt-0 sm:px-6 lg:px-8">
+          <img
+            src={bannerImage}
+            alt="KS Brand Store banner"
+            className="w-full object-cover"
+          />
         </section>
 
         <section
@@ -82,15 +145,69 @@ export function StorePage({
           className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8"
         >
           {activeProducts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-6">
-              {activeProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  language={language}
-                  product={product}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:gap-6">
+                {visibleProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    language={language}
+                    onSelect={openProductDetails}
+                    product={product}
+                  />
+                ))}
+              </div>
+              {activeProducts.length > productsPerPage ? (
+                <div className="mt-8 flex flex-col items-stretch justify-between gap-3 border-t border-[#9C7A42]/25 pt-5 sm:flex-row sm:items-center">
+                  <p className="text-sm font-semibold text-[#B8A98A]">
+                    Showing {showingStart} to {pageEndIndex} of{' '}
+                    {activeProducts.length}
+                  </p>
+                  <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:flex sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCurrentPage(Math.max(safeCurrentPage - 1, 1))
+                      }
+                      disabled={safeCurrentPage === 1}
+                      className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-5 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      Previous
+                    </button>
+                    <div className="flex items-center justify-center gap-1">
+                      {pageNumbers.map((pageNumber) => (
+                        <button
+                          key={pageNumber}
+                          type="button"
+                          onClick={() => setCurrentPage(pageNumber)}
+                          aria-current={
+                            pageNumber === safeCurrentPage ? 'page' : undefined
+                          }
+                          className={`inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-[10px] border px-3 text-sm font-black transition focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] ${
+                            pageNumber === safeCurrentPage
+                              ? 'border-[#E4B45A] bg-[#E4B45A] text-[#000000]'
+                              : 'border-[#9C7A42]/70 text-[#B8A98A] hover:border-[#FDD97D] hover:text-[#FDD97D]'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCurrentPage(
+                          Math.min(safeCurrentPage + 1, totalPages),
+                        )
+                      }
+                      disabled={safeCurrentPage === totalPages}
+                      className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-5 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="mt-8 rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-8 text-center">
               <p className="text-lg font-black text-[#FFF8E7]">
@@ -103,6 +220,154 @@ export function StorePage({
           )}
         </section>
       </main>
+
+      {selectedProduct ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#000000]/75 p-4"
+          onMouseDown={() => setSelectedProduct(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="store-product-details-title"
+            className="max-h-[calc(100vh-2rem)] w-full max-w-4xl overflow-y-auto rounded-[8px] border border-[#9C7A42]/45 bg-[#130E0D] shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#9C7A42]/30 px-5 py-4">
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
+                Product Detail
+              </p>
+              <button
+                type="button"
+                onClick={() => setSelectedProduct(null)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#E4B45A]/50 bg-[#000000] text-lg font-black text-[#FDD97D] transition hover:bg-[#2A0F0A] focus:outline-none focus:ring-2 focus:ring-[#FDD97D]"
+                aria-label="Close product detail"
+              >
+                X
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-[minmax(0,0.95fr)_minmax(18rem,1.05fr)]">
+              <div className="bg-[#000000] p-[10px]">
+                <img
+                  src={selectedProduct.image}
+                  alt={`${selectedProduct.name} shoe`}
+                  className="max-h-[62vh] w-full object-contain md:h-full md:min-h-[24rem]"
+                />
+              </div>
+
+              <div className="flex flex-col p-5 md:border-l md:border-[#9C7A42]/30 md:p-6">
+                <h2
+                  id="store-product-details-title"
+                  className="text-2xl font-black text-[#FFF8E7]"
+                >
+                  {selectedProduct.name}
+                </h2>
+                <div className="mt-4 flex items-baseline gap-3">
+                  {selectedProduct.discountPrice?.trim() ? (
+                    <span className="text-base font-black text-[#B8A98A] line-through decoration-[#FDD97D]/70">
+                      {formatPrice(selectedProduct.price)}
+                    </span>
+                  ) : null}
+                  <span className="text-2xl font-black text-[#E4B45A]">
+                    {formatPrice(
+                      selectedProduct.discountPrice?.trim() || selectedProduct.price,
+                    )}
+                  </span>
+                </div>
+                {selectedProductSizes.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="text-sm font-black text-[#B8A98A]">
+                      Sizes
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedProductSizes.map((size) => {
+                        const isSelected = selectedSize === size
+
+                        return (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => setSelectedSize(size)}
+                            className={`min-h-9 rounded-[8px] border px-3 text-xs font-black transition focus:outline-none focus:ring-2 focus:ring-[#FDD97D] ${
+                              isSelected
+                                ? 'border-[#E4B45A] bg-[#E4B45A] text-[#000000]'
+                                : 'border-[#9C7A42]/45 bg-[#000000] text-[#FFF8E7] hover:border-[#E4B45A] hover:text-[#FDD97D]'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+                <div className="mt-6 rounded-[8px] bg-[#000000] p-4 md:mt-auto">
+                  <p className="text-xs font-black text-[#B8A98A]">
+                    Quantity
+                  </p>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-[7.25rem_minmax(0,1fr)]">
+                    <div className="flex min-h-10 overflow-hidden rounded-[8px] border border-[#9C7A42]/35 bg-[#130E0D]">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedQuantity((currentQuantity) =>
+                            Math.max(currentQuantity - 1, 1),
+                          )
+                        }
+                        className="flex w-10 items-center justify-center text-lg font-black text-[#B8A98A] transition hover:bg-[#2A0F0A] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FDD97D]"
+                        aria-label="Decrease quantity"
+                      >
+                        -
+                      </button>
+                      <span className="flex min-w-0 flex-1 items-center justify-center border-x border-[#9C7A42]/25 text-base font-black text-[#FFF8E7]">
+                        {selectedQuantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedQuantity((currentQuantity) =>
+                            currentQuantity + 1,
+                          )
+                        }
+                        className="flex w-10 items-center justify-center text-lg font-black text-[#B8A98A] transition hover:bg-[#2A0F0A] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FDD97D]"
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addSelectedProductToCart}
+                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[8px] bg-[#E4B45A] px-5 text-sm font-black text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="8" cy="21" r="1" />
+                        <circle cx="19" cy="21" r="1" />
+                        <path d="M2.1 2.1h3l2.7 12.4a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6l1.3-6.9H6.2" />
+                      </svg>
+                      Add to Cart ·{' '}
+                      {formatTotalPrice(
+                        selectedProductUnitPrice,
+                        selectedQuantity,
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <Footer language={language} />
     </>

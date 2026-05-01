@@ -41,7 +41,6 @@ const footerText = {
     contact: 'Contact',
     description:
       'Premium footwear curated for polished everyday style. Message us to confirm size, availability, delivery, and current collection drops.',
-    messenger: 'Open Messenger',
     social: 'Social',
   },
   km: {
@@ -49,7 +48,6 @@ const footerText = {
     contact: 'ទំនាក់ទំនង',
     description:
       'ស្បែកជើងលំដាប់ខ្ពស់សម្រាប់ស្ទាយប្រចាំថ្ងៃ។ ផ្ញើសារមកយើងដើម្បីបញ្ជាក់ទំហំ ស្តុក ការដឹកជញ្ជូន និងម៉ូដែលថ្មីៗ។',
-    messenger: 'បើក Messenger',
     social: 'បណ្តាញសង្គម',
   },
 }
@@ -133,14 +131,6 @@ export function Footer({ language = 'en' }: FooterProps) {
                 {phone.label}
               </a>
             ))}
-            <a
-              href="https://m.me/ksbrandstore"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex min-h-12 items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
-            >
-              {text.messenger}
-            </a>
           </div>
         </div>
       </div>

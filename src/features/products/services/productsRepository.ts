@@ -4,6 +4,7 @@ import type { Product, ProductForm } from '../types'
 
 type ProductRow = {
   active: boolean
+  discount_price?: string | null
   id: string
   image_url: string
   name: string
@@ -12,12 +13,13 @@ type ProductRow = {
   tag: string
 }
 
-const productSelect = 'id,name,price,sizes,tag,image_url,active'
+const productSelect = 'id,name,price,discount_price,sizes,tag,image_url,active'
 export const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 const mapProductRow = (row: ProductRow): Product => ({
   active: row.active,
+  discountPrice: row.discount_price ?? '',
   id: row.id,
   image: row.image_url,
   name: row.name,
@@ -28,6 +30,7 @@ const mapProductRow = (row: ProductRow): Product => ({
 
 const mapProductForm = (product: ProductForm) => ({
   active: product.active,
+  discount_price: product.discountPrice?.trim() || null,
   image_url: product.image,
   name: product.name,
   price: product.price,
@@ -59,10 +62,14 @@ export async function fetchProducts(accessToken?: string) {
 export async function createRemoteProduct(
   product: ProductForm,
   accessToken: string,
+  productId?: string,
 ) {
   const rows = await supabaseFetch<ProductRow[]>('/rest/v1/products', {
     accessToken,
-    body: mapProductForm(product),
+    body: {
+      ...mapProductForm(product),
+      ...(productId ? { id: productId } : {}),
+    },
     method: 'POST',
     prefer: 'return=representation',
   })

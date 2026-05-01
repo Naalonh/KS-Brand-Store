@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CategoriesState } from '../../categories/hooks/useCategories'
 import type { ProductsState } from '../../products/hooks/useProducts'
 import type { SizesState } from '../../sizes/hooks/useSizes'
 import type { Product } from '../../products/types'
@@ -7,6 +8,7 @@ import { ProductFormPanel } from './ProductFormPanel'
 import { ProductInventoryList, type ProductViewMode } from './ProductInventoryList'
 
 type ProductsPanelProps = {
+  categoriesState: CategoriesState
   productsState: ProductsState
   sizesState: SizesState
 }
@@ -18,17 +20,25 @@ const matchesSearch = (product: Product, searchTerm: string) => {
     return true
   }
 
-  return [product.name, product.tag, product.sizes, product.price]
+  return [
+    product.name,
+    product.tag,
+    product.sizes,
+    product.price,
+    product.discountPrice ?? '',
+  ]
     .join(' ')
     .toLowerCase()
     .includes(normalizedSearch)
 }
 
 export function ProductsPanel({
+  categoriesState,
   productsState,
   sizesState,
 }: ProductsPanelProps) {
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<ProductViewMode>('list')
@@ -89,6 +99,11 @@ export function ProductsPanel({
   const openEditProductModal = (product: Product) => {
     productsState.editProduct(product)
     setIsProductModalOpen(true)
+  }
+
+  const selectCategoryFilter = (category: string) => {
+    setCategoryFilter(category)
+    setIsCategoryFilterOpen(false)
   }
 
   const toggleProductStatus = async (productId: string) => {
@@ -152,23 +167,83 @@ export function ProductsPanel({
             />
           </label>
 
-          <label className="grid gap-2">
+          <div className="grid gap-2">
             <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
               Filter Category
             </span>
-            <select
-              value={categoryFilter}
-              onChange={(event) => setCategoryFilter(event.target.value)}
-              className="min-h-12 cursor-pointer rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-[#FFF8E7] outline-none transition focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
+            <div
+              className="relative"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  setIsCategoryFilterOpen(false)
+                }
+              }}
             >
-              <option value="all">All categories</option>
-              {categoryOptions.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </label>
+              <button
+                type="button"
+                onClick={() => setIsCategoryFilterOpen((isOpen) => !isOpen)}
+                className="inline-flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-left text-[#FFF8E7] outline-none transition hover:border-[#FDD97D] focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
+                aria-haspopup="listbox"
+                aria-expanded={isCategoryFilterOpen}
+              >
+                <span className="min-w-0 truncate">
+                  {categoryFilter === 'all' ? 'All categories' : categoryFilter}
+                </span>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 16 16"
+                  className={`h-4 w-4 shrink-0 text-[#E4B45A] transition-transform ${
+                    isCategoryFilterOpen ? '' : 'rotate-180'
+                  }`}
+                >
+                  <path
+                    d="M4 10L8 6L12 10"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.25"
+                  />
+                </svg>
+              </button>
+              {isCategoryFilterOpen ? (
+                <div
+                  role="listbox"
+                  className="absolute left-0 top-full z-20 mt-2 w-full overflow-hidden rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] shadow-[0_18px_45px_rgba(0,0,0,0.65)]"
+                >
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={categoryFilter === 'all'}
+                    onClick={() => selectCategoryFilter('all')}
+                    className={`block min-h-11 w-full cursor-pointer px-4 text-left text-sm font-black transition ${
+                      categoryFilter === 'all'
+                        ? 'bg-[#E4B45A] text-[#000000]'
+                        : 'text-[#B8A98A] hover:bg-[#130E0D] hover:text-[#FDD97D]'
+                    }`}
+                  >
+                    All categories
+                  </button>
+                  {categoryOptions.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      role="option"
+                      aria-selected={categoryFilter === category}
+                      onClick={() => selectCategoryFilter(category)}
+                      className={`block min-h-11 w-full cursor-pointer px-4 text-left text-sm font-black transition ${
+                        categoryFilter === category
+                          ? 'bg-[#E4B45A] text-[#000000]'
+                          : 'text-[#B8A98A] hover:bg-[#130E0D] hover:text-[#FDD97D]'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
 
           <div className="grid gap-2">
             <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
@@ -222,6 +297,7 @@ export function ProductsPanel({
             className="max-h-[calc(100vh-1.5rem)] w-full max-w-3xl overflow-y-auto sm:max-h-[calc(100vh-3rem)]"
           >
             <ProductFormPanel
+              categoriesState={categoriesState}
               productsState={productsState}
               sizesState={sizesState}
               onCancel={closeProductModal}

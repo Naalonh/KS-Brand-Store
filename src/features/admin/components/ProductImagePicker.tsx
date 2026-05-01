@@ -8,13 +8,14 @@ import {
 } from 'react'
 import {
   canUploadProductImages,
-  uploadProductImage,
+  uploadProductImageForProduct,
 } from '../../products/services/productImagesRepository'
 
 type ProductImagePickerProps = {
   accessToken?: string
   imageUrl: string
   onChange: (imageUrl: string) => void
+  productId: string
 }
 
 type CropState = {
@@ -54,6 +55,7 @@ export function ProductImagePicker({
   accessToken,
   imageUrl,
   onChange,
+  productId,
 }: ProductImagePickerProps) {
   const captureInputRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -80,7 +82,7 @@ export function ProductImagePicker({
     try {
       const nextImageUrl =
         canUploadProductImages && accessToken
-          ? await uploadProductImage(blob, accessToken)
+          ? await uploadProductImageForProduct(blob, accessToken, productId)
           : await blobToDataUrl(blob)
 
       onChange(nextImageUrl)

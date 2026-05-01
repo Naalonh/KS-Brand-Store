@@ -4,6 +4,10 @@ create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(trim(name)) between 1 and 120),
   price text not null check (char_length(trim(price)) between 1 and 40),
+  discount_price text check (
+    discount_price is null
+    or char_length(trim(discount_price)) between 1 and 40
+  ),
   sizes text not null check (char_length(trim(sizes)) between 1 and 120),
   tag text not null check (char_length(trim(tag)) between 1 and 80),
   image_url text not null check (image_url ~* '^https?://'),

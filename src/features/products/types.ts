@@ -2,6 +2,7 @@ export type Product = {
   id: string
   name: string
   price: string
+  discountPrice?: string
   sizes: string
   tag: string
   image: string

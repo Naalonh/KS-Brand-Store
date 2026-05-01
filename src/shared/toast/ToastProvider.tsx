@@ -74,7 +74,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
       <div
         aria-live="polite"
         aria-relevant="additions text"
-        className="pointer-events-none fixed right-4 top-4 z-[100] grid w-[min(24rem,calc(100vw-2rem))] gap-3"
+        className="pointer-events-none fixed right-4 top-4 z-100 grid w-[min(24rem,calc(100vw-2rem))] gap-3"
       >
         {toasts.map((toast) => {
           const tone = toastToneStyles[toast.tone]
@@ -104,7 +104,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
                   type="button"
                   onClick={() => dismissToast(toast.id)}
                   aria-label="Dismiss notification"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border border-[#9C7A42]/45 text-sm font-black text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D]"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#9C7A42]/45 text-sm font-black text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D]"
                 >
                   x
                 </button>

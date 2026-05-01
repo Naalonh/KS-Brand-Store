@@ -11,6 +11,12 @@ import { ResetPasswordPage } from './features/auth/components/ResetPasswordPage'
 import { useAdminSession } from './features/auth/hooks/useAdminSession'
 import type { AdminSession } from './features/auth/services/authService'
 import { CartPage } from './features/cart/CartPage'
+import {
+  createCartItem,
+  loadCartItems,
+  saveCartItems,
+  type CartItem,
+} from './features/cart/cartStorage'
 import { useCategories } from './features/categories/hooks/useCategories'
 import { MyStorePage } from './features/mystore/MyStorePage'
 import { useProducts } from './features/products/hooks/useProducts'
@@ -49,6 +55,7 @@ function App() {
   const { currentPath, currentView, openPath, openView } = usePathView()
   const [theme, setTheme] = useState<Theme>(getSavedTheme)
   const [language, setLanguage] = useState<Language>(getSavedLanguage)
+  const [cartItems, setCartItems] = useState<CartItem[]>(loadCartItems)
   const [adminSection, setAdminSection] = useState<AdminSection>(() =>
     getAdminSectionFromPath(window.location.pathname),
   )
@@ -145,6 +152,40 @@ function App() {
     )
   }
 
+  const addProductToCart = (
+    product: Parameters<typeof createCartItem>[0],
+    quantity: number,
+    size: string,
+  ) => {
+    setCartItems((currentItems) => {
+      const nextItem = createCartItem(product, quantity, size)
+      const existingItemIndex = currentItems.findIndex(
+        (item) =>
+          item.productId === nextItem.productId && item.size === nextItem.size,
+      )
+      const nextItems =
+        existingItemIndex >= 0
+          ? currentItems.map((item, index) =>
+              index === existingItemIndex
+                ? { ...item, quantity: item.quantity + nextItem.quantity }
+                : item,
+            )
+          : [...currentItems, nextItem]
+
+      saveCartItems(nextItems)
+      return nextItems
+    })
+  }
+
+  const clearCart = () => {
+    setCartItems([])
+    saveCartItems([])
+  }
+  const cartQuantity = cartItems.reduce(
+    (sum, item) => sum + item.quantity,
+    0,
+  )
+
   return (
     <div
       className="min-h-screen bg-[#000000] font-['Inter'] text-[#FFF8E7]"
@@ -153,6 +194,7 @@ function App() {
     >
       <AppHeader
         adminTitle={adminTitles[adminSection]}
+        cartQuantity={cartQuantity}
         currentView={currentView}
         isAuthenticated={adminSession.isAuthenticated}
         language={language}
@@ -204,7 +246,8 @@ function App() {
         />
       ) : currentView === 'cart' ? (
         <CartPage
-          featuredProduct={productsState.featuredProduct}
+          cartItems={cartItems}
+          onClearCart={clearCart}
           language={language}
           onViewHome={() => openView('store')}
         />
@@ -212,6 +255,7 @@ function App() {
         <StorePage
           activeProducts={productsState.activeProducts}
           language={language}
+          onAddToCart={addProductToCart}
           onManageProducts={openProductManagement}
         />
       )}

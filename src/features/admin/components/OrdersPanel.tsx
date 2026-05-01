@@ -54,16 +54,26 @@ const getAvailableSizes = (sizes: string) => {
 
 export function OrdersPanel({ productsState }: OrdersPanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isProductPickerOpen, setIsProductPickerOpen] = useState(false)
   const [isSizePickerOpen, setIsSizePickerOpen] = useState(false)
+  const [isStatusPickerOpen, setIsStatusPickerOpen] = useState(false)
   const { showToast } = useToast()
   const ordersState = useOrders(productsState.products)
   const hasProducts = ordersState.productOptions.length > 0
   const availableSizes = getAvailableSizes(
     ordersState.selectedProduct?.sizes ?? '',
   )
+  const selectedOrderProductLabel = ordersState.selectedProduct
+    ? `${ordersState.selectedProduct.name} - ${ordersState.selectedProduct.price}`
+    : 'No products'
+  const selectedOrderStatusLabel =
+    orderStatuses.find((status) => status.value === ordersState.form.status)
+      ?.label ?? 'Pending'
   const closeModal = () => {
     ordersState.resetForm()
+    setIsProductPickerOpen(false)
     setIsSizePickerOpen(false)
+    setIsStatusPickerOpen(false)
     setIsModalOpen(false)
   }
 
@@ -71,7 +81,9 @@ export function OrdersPanel({ productsState }: OrdersPanelProps) {
     const didSubmit = ordersState.handleSubmit(event)
 
     if (didSubmit) {
+      setIsProductPickerOpen(false)
       setIsSizePickerOpen(false)
+      setIsStatusPickerOpen(false)
       setIsModalOpen(false)
       showToast({
         message: 'Order was created successfully.',
@@ -421,27 +433,81 @@ export function OrdersPanel({ productsState }: OrdersPanelProps) {
               </label>
 
               <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.5fr_0.7fr]">
-                <label className="grid gap-2">
+                <div className="grid gap-2">
                   <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
                     Product
                   </span>
-                  <select
-                    value={ordersState.form.productId}
-                    onChange={(event) => {
-                      ordersState.updateForm('productId', event.target.value)
-                      ordersState.updateForm('size', '')
+                  <div
+                    className="relative"
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) {
+                        setIsProductPickerOpen(false)
+                      }
                     }}
-                    required
-                    disabled={!hasProducts}
-                    className="min-h-12 cursor-pointer rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-[#FFF8E7] outline-none transition focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {ordersState.productOptions.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} - {product.price}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsProductPickerOpen((isOpen) =>
+                          hasProducts ? !isOpen : false,
+                        )
+                      }
+                      disabled={!hasProducts}
+                      className="inline-flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-left font-semibold text-[#FFF8E7] outline-none transition hover:border-[#FDD97D] focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35 disabled:cursor-not-allowed disabled:opacity-60"
+                      aria-haspopup="listbox"
+                      aria-expanded={isProductPickerOpen}
+                    >
+                      <span className="min-w-0 truncate">
+                        {selectedOrderProductLabel}
+                      </span>
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 16 16"
+                        className={`h-4 w-4 shrink-0 text-[#E4B45A] transition-transform ${
+                          isProductPickerOpen ? '' : 'rotate-180'
+                        }`}
+                      >
+                        <path
+                          d="M4 10L8 6L12 10"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2.25"
+                        />
+                      </svg>
+                    </button>
+                    {isProductPickerOpen ? (
+                      <div
+                        role="listbox"
+                        className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] shadow-[0_18px_45px_rgba(0,0,0,0.65)]"
+                      >
+                        {ordersState.productOptions.map((product) => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            role="option"
+                            aria-selected={
+                              ordersState.form.productId === product.id
+                            }
+                            onClick={() => {
+                              ordersState.updateForm('productId', product.id)
+                              ordersState.updateForm('size', '')
+                              setIsProductPickerOpen(false)
+                            }}
+                            className={`block min-h-11 w-full cursor-pointer px-4 text-left text-sm font-black transition ${
+                              ordersState.form.productId === product.id
+                                ? 'bg-[#E4B45A] text-[#000000]'
+                                : 'text-[#B8A98A] hover:bg-[#130E0D] hover:text-[#FDD97D]'
+                            }`}
+                          >
+                            {product.name} - {product.price}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
 
                 <label className="grid gap-2">
                   <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
@@ -482,27 +548,77 @@ export function OrdersPanel({ productsState }: OrdersPanelProps) {
                   />
                 </label>
 
-                <label className="grid gap-2">
+                <div className="grid gap-2">
                   <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
                     Status
                   </span>
-                  <select
-                    value={ordersState.form.status}
-                    onChange={(event) =>
-                      ordersState.updateForm(
-                        'status',
-                        event.target.value as OrderStatus,
-                      )
-                    }
-                    className="min-h-12 cursor-pointer rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-[#FFF8E7] outline-none transition focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
+                  <div
+                    className="relative"
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) {
+                        setIsStatusPickerOpen(false)
+                      }
+                    }}
                   >
-                    {orderStatuses.map((status) => (
-                      <option key={status.value} value={status.value}>
-                        {status.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsStatusPickerOpen((isOpen) => !isOpen)
+                      }
+                      className="inline-flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-left font-semibold text-[#FFF8E7] outline-none transition hover:border-[#FDD97D] focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
+                      aria-haspopup="listbox"
+                      aria-expanded={isStatusPickerOpen}
+                    >
+                      <span className="min-w-0 truncate">
+                        {selectedOrderStatusLabel}
+                      </span>
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 16 16"
+                        className={`h-4 w-4 shrink-0 text-[#E4B45A] transition-transform ${
+                          isStatusPickerOpen ? '' : 'rotate-180'
+                        }`}
+                      >
+                        <path
+                          d="M4 10L8 6L12 10"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2.25"
+                        />
+                      </svg>
+                    </button>
+                    {isStatusPickerOpen ? (
+                      <div
+                        role="listbox"
+                        className="absolute left-0 top-full z-20 mt-2 w-full overflow-hidden rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] shadow-[0_18px_45px_rgba(0,0,0,0.65)]"
+                      >
+                        {orderStatuses.map((status) => (
+                          <button
+                            key={status.value}
+                            type="button"
+                            role="option"
+                            aria-selected={
+                              ordersState.form.status === status.value
+                            }
+                            onClick={() => {
+                              ordersState.updateForm('status', status.value)
+                              setIsStatusPickerOpen(false)
+                            }}
+                            className={`block min-h-11 w-full cursor-pointer px-4 text-left text-sm font-black transition ${
+                              ordersState.form.status === status.value
+                                ? 'bg-[#E4B45A] text-[#000000]'
+                                : 'text-[#B8A98A] hover:bg-[#130E0D] hover:text-[#FDD97D]'
+                            }`}
+                          >
+                            {status.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
 
               <label className="grid gap-2">

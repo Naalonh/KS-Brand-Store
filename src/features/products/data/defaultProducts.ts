@@ -36,6 +36,7 @@ export const defaultProducts: Product[] = [
 export const emptyProductForm: ProductForm = {
   name: '',
   price: '',
+  discountPrice: '',
   sizes: '',
   tag: '',
   image: '',

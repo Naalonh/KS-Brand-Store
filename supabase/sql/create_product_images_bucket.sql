@@ -13,9 +13,16 @@ set
   allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists "Anyone can view product images" on storage.objects;
+drop policy if exists "Admins can read product images" on storage.objects;
 drop policy if exists "Admins can upload product images" on storage.objects;
 drop policy if exists "Admins can update product images" on storage.objects;
 drop policy if exists "Admins can delete product images" on storage.objects;
+
+create policy "Admins can read product images"
+on storage.objects
+for select
+to authenticated
+using (bucket_id = 'product-images' and (select public.is_admin()));
 
 create policy "Admins can upload product images"
 on storage.objects

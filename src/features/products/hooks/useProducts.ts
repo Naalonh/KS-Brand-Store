@@ -9,6 +9,11 @@ import {
   updateRemoteProduct,
   uuidPattern,
 } from '../services/productsRepository'
+import {
+  deleteProductImage,
+  deleteProductImagesForProduct,
+  getProductImageStoragePath,
+} from '../services/productImagesRepository'
 import type { Product, ProductForm } from '../types'
 import { loadProducts, saveProducts } from '../utils/productStorage'
 
@@ -17,6 +22,7 @@ export type ProductsState = ReturnType<typeof useProducts>
 export function useProducts(accessToken?: string) {
   const [products, setProducts] = useState<Product[]>(loadProducts)
   const [form, setForm] = useState<ProductForm>(emptyProductForm)
+  const [draftProductId, setDraftProductId] = useState(createProductId)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -88,6 +94,7 @@ export function useProducts(accessToken?: string) {
   const resetForm = () => {
     setForm(emptyProductForm)
     setEditingId(null)
+    setDraftProductId(createProductId())
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -96,6 +103,7 @@ export function useProducts(accessToken?: string) {
     const nextProduct: ProductForm = {
       name: form.name.trim(),
       price: form.price.trim(),
+      discountPrice: form.discountPrice?.trim() ?? '',
       sizes: form.sizes.trim(),
       tag: form.tag.trim(),
       image: form.image.trim(),
@@ -121,6 +129,22 @@ export function useProducts(accessToken?: string) {
         accessToken &&
         uuidPattern.test(editingId)
       ) {
+        const previousProduct = products.find(
+          (product) => product.id === editingId,
+        )
+        const previousImagePath = previousProduct?.image
+          ? getProductImageStoragePath(previousProduct.image)
+          : ''
+        const nextImagePath = getProductImageStoragePath(nextProduct.image)
+        const shouldDeletePreviousImage =
+          previousProduct?.image &&
+          previousImagePath &&
+          previousImagePath !== nextImagePath &&
+          !products.some(
+            (product) =>
+              product.id !== editingId &&
+              product.image === previousProduct.image,
+          )
         const updatedProduct = await updateRemoteProduct(
           editingId,
           nextProduct,
@@ -133,10 +157,23 @@ export function useProducts(accessToken?: string) {
           ),
         )
         setSource('supabase')
+
+        if (shouldDeletePreviousImage && previousProduct) {
+          try {
+            await deleteProductImage(previousProduct.image, accessToken)
+          } catch (storageError) {
+            setError(
+              `Product was updated, but the old image could not be removed from storage. ${
+                storageError instanceof Error ? storageError.message : ''
+              }`.trim(),
+            )
+          }
+        }
       } else if (canUseSupabaseProducts && accessToken && !editingId) {
         const createdProduct = await createRemoteProduct(
           nextProduct,
           accessToken,
+          uuidPattern.test(draftProductId) ? draftProductId : undefined,
         )
 
         setProducts((currentProducts) => [createdProduct, ...currentProducts])
@@ -149,7 +186,7 @@ export function useProducts(accessToken?: string) {
         )
       } else {
         setProducts((currentProducts) => [
-          { id: createProductId(), ...nextProduct },
+          { id: draftProductId, ...nextProduct },
           ...currentProducts,
         ])
       }
@@ -167,6 +204,7 @@ export function useProducts(accessToken?: string) {
     setForm({
       name: product.name,
       price: product.price,
+      discountPrice: product.discountPrice ?? '',
       sizes: product.sizes,
       tag: product.tag,
       image: product.image,
@@ -193,6 +231,7 @@ export function useProducts(accessToken?: string) {
           productId,
           {
             active: nextProduct.active,
+            discountPrice: nextProduct.discountPrice,
             image: nextProduct.image,
             name: nextProduct.name,
             price: nextProduct.price,
@@ -226,12 +265,34 @@ export function useProducts(accessToken?: string) {
 
   const deleteProduct = async (productId: string) => {
     setError('')
+    const product = products.find(
+      (currentProduct) => currentProduct.id === productId,
+    )
+
+    let shouldRemoveProductLocally = true
 
     if (canUseSupabaseProducts && accessToken && uuidPattern.test(productId)) {
       try {
         await deleteRemoteProduct(productId, accessToken)
       } catch {
         setError('Could not delete this product in Supabase.')
+        shouldRemoveProductLocally = false
+      }
+
+      if (shouldRemoveProductLocally && product?.image) {
+        try {
+          await deleteProductImagesForProduct(productId, accessToken)
+          await deleteProductImage(product.image, accessToken)
+        } catch (storageError) {
+          setError(
+            `Product was deleted, but its image could not be removed from storage. ${
+              storageError instanceof Error ? storageError.message : ''
+            }`.trim(),
+          )
+        }
+      }
+
+      if (!shouldRemoveProductLocally) {
         return false
       }
     }
@@ -262,6 +323,7 @@ export function useProducts(accessToken?: string) {
     featuredProduct,
     form,
     handleSubmit,
+    imageProductId: editingId ?? draftProductId,
     isLoading,
     products,
     resetForm,

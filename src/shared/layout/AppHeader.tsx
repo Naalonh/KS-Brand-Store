@@ -3,6 +3,7 @@ import { BrandMark } from '../components/BrandMark'
 
 type AppHeaderProps = {
   adminTitle?: string
+  cartQuantity: number
   currentView: View
   isAuthenticated: boolean
   language: 'en' | 'km'
@@ -71,6 +72,7 @@ function EnglishFlagIcon() {
 
 export function AppHeader({
   adminTitle = 'Dashboard',
+  cartQuantity,
   currentView,
   isAuthenticated,
   language,
@@ -135,10 +137,10 @@ export function AppHeader({
           {isAuthenticated ? (
             <button
               type="button"
-              onClick={onLogout}
+              onClick={() => onOpenView('admin')}
               className="hidden min-h-10 items-center justify-center rounded-full border border-[#9C7A42]/70 bg-[#130E0D] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:inline-flex"
             >
-              Logout
+              Dashboard
             </button>
           ) : null}
           <button
@@ -193,13 +195,15 @@ export function AppHeader({
               <path d="M6 8h12l-1 12H7L6 8Z" />
               <path d="M9 8a3 3 0 0 1 6 0" />
             </svg>
-            <span className="sr-only">Order on Messenger</span>
-            <span
-              aria-hidden="true"
-              className="absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-black leading-none text-white"
-            >
-              1
-            </span>
+            <span className="sr-only">Open cart</span>
+            {cartQuantity > 0 ? (
+              <span
+                aria-hidden="true"
+                className="absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-black leading-none text-white"
+              >
+                {cartQuantity}
+              </span>
+            ) : null}
           </button>
           <button
             type="button"
