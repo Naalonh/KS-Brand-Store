@@ -31,8 +31,11 @@ type SupabaseUser = {
 const TOKEN_REFRESH_MARGIN_SECONDS = 60
 const WRONG_EMAIL_MESSAGE = 'Wrong email.'
 const DEFAULT_RESET_RETRY_AFTER_SECONDS = 65
+const DEFAULT_EMAIL_RETRY_AFTER_SECONDS = 60 * 60
 const RESET_RATE_LIMIT_MESSAGE =
   'Too many reset emails. Please wait before sending another link.'
+const EMAIL_RATE_LIMIT_MESSAGE =
+  'Email sending limit reached. Please wait about 1 hour before sending another reset link.'
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase()
 
@@ -42,21 +45,30 @@ const isUserNotFoundError = (message: string) =>
 const isRateLimitError = (message: string) =>
   /rate limit|too many|429/i.test(message)
 
+const isEmailRateLimitError = (message: string) =>
+  /email.*rate limit|rate limit.*email|email.*exceeded/i.test(message)
+
 export class PasswordResetRateLimitError extends Error {
   retryAfterSeconds: number
 
-  constructor(retryAfterSeconds = DEFAULT_RESET_RETRY_AFTER_SECONDS) {
-    super(RESET_RATE_LIMIT_MESSAGE)
+  constructor(
+    message = RESET_RATE_LIMIT_MESSAGE,
+    retryAfterSeconds = DEFAULT_RESET_RETRY_AFTER_SECONDS,
+  ) {
+    super(message)
     this.name = 'PasswordResetRateLimitError'
     this.retryAfterSeconds = retryAfterSeconds
   }
 }
 
-const getRetryAfterSeconds = (response: Response) => {
+const getRetryAfterSeconds = (
+  response: Response,
+  fallbackSeconds = DEFAULT_RESET_RETRY_AFTER_SECONDS,
+) => {
   const retryAfter = response.headers.get('Retry-After')
 
   if (!retryAfter) {
-    return DEFAULT_RESET_RETRY_AFTER_SECONDS
+    return fallbackSeconds
   }
 
   const retryAfterSeconds = Number(retryAfter)
@@ -69,12 +81,12 @@ const getRetryAfterSeconds = (response: Response) => {
 
   if (!Number.isNaN(retryAfterDate)) {
     return Math.max(
-      DEFAULT_RESET_RETRY_AFTER_SECONDS,
+      fallbackSeconds,
       Math.ceil((retryAfterDate - Date.now()) / 1000),
     )
   }
 
-  return DEFAULT_RESET_RETRY_AFTER_SECONDS
+  return fallbackSeconds
 }
 
 const getSessionExpiresAt = (session: SupabasePasswordSession) =>
@@ -174,7 +186,16 @@ export async function requestAdminPasswordReset(email: string) {
     }
 
     if (response.status === 429 || isRateLimitError(errorMessage)) {
-      throw new PasswordResetRateLimitError(getRetryAfterSeconds(response))
+      const isEmailLimit = isEmailRateLimitError(errorMessage)
+      throw new PasswordResetRateLimitError(
+        isEmailLimit ? EMAIL_RATE_LIMIT_MESSAGE : RESET_RATE_LIMIT_MESSAGE,
+        getRetryAfterSeconds(
+          response,
+          isEmailLimit
+            ? DEFAULT_EMAIL_RETRY_AFTER_SECONDS
+            : DEFAULT_RESET_RETRY_AFTER_SECONDS,
+        ),
+      )
     }
 
     throw new Error(errorMessage)

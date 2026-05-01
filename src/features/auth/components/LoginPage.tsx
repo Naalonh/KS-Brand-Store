@@ -105,7 +105,9 @@ export function LoginPage({ onLogin, onViewStore }: LoginPageProps) {
       }
 
       setResetError(
-        /rate limit|too many/i.test(message)
+        resetRequestError instanceof PasswordResetRateLimitError
+          ? message
+          : /rate limit|too many/i.test(message)
           ? 'Too many reset emails. Please wait before sending another link.'
           : message,
       )
