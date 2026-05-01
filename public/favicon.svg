@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="KS Brand Store">
+  <rect width="64" height="64" rx="32" fill="#000000"/>
+  <circle cx="32" cy="32" r="27" fill="#130E0D" stroke="#E4B45A" stroke-width="2"/>
+  <circle cx="32" cy="32" r="21" fill="none" stroke="#9C7A42" stroke-width="1"/>
+  <text x="32" y="37" fill="#FDD97D" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700" letter-spacing="2" text-anchor="middle">KS</text>
+</svg>
