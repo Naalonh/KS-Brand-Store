@@ -28,6 +28,47 @@ const navLabels = {
   },
 }
 
+function CambodiaFlagIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-3.5 w-5 shrink-0 overflow-hidden rounded-[2px]"
+      viewBox="0 0 30 20"
+    >
+      <rect fill="#032ea1" height="20" width="30" />
+      <rect fill="#e00025" height="10" width="30" y="5" />
+      <path
+        d="M8.8 14.9h12.4v-1.3h-1V11h-.9V8.8h-1.4V7.2h-1.4V5.4L15 3.8l-1.5 1.6v1.8h-1.4v1.6h-1.4V11h-.9v2.6h-1v1.3Zm3.1-1.3v-2.4h1.2v2.4h-1.2Zm2.5 0v-3h1.2v3h-1.2Zm2.5 0v-2.4h1.2v2.4h-1.2Z"
+        fill="#ffffff"
+        stroke="#111111"
+        strokeLinejoin="round"
+        strokeWidth="0.25"
+      />
+    </svg>
+  )
+}
+
+function EnglishFlagIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-3.5 w-5 shrink-0 overflow-hidden rounded-[2px]"
+      viewBox="0 0 60 40"
+    >
+      <clipPath id="union-jack-clip">
+        <path d="M0 0h60v40H0z" />
+      </clipPath>
+      <g clipPath="url(#union-jack-clip)">
+        <rect fill="#012169" height="40" width="60" />
+        <path d="m0 0 60 40m0-40L0 40" stroke="#ffffff" strokeWidth="8" />
+        <path d="m0 0 60 40m0-40L0 40" stroke="#c8102e" strokeWidth="4" />
+        <path d="M30 0v40M0 20h60" stroke="#ffffff" strokeWidth="13" />
+        <path d="M30 0v40M0 20h60" stroke="#c8102e" strokeWidth="8" />
+      </g>
+    </svg>
+  )
+}
+
 export function AppHeader({
   adminTitle = 'Dashboard',
   currentView,
@@ -119,7 +160,7 @@ export function AppHeader({
                 language === 'km' ? 'text-[#000000]' : 'text-[#B8A98A]'
               }`}
             >
-              <span aria-hidden="true">🇰🇭</span>
+              <CambodiaFlagIcon />
               ខ្មែរ
             </span>
             <span
@@ -127,7 +168,7 @@ export function AppHeader({
                 language === 'en' ? 'text-[#000000]' : 'text-[#B8A98A]'
               }`}
             >
-              <span aria-hidden="true">🇬🇧</span>
+              <EnglishFlagIcon />
               English
             </span>
           </button>
