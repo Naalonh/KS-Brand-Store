@@ -177,3 +177,5 @@ set
   name = excluded.name,
   active = excluded.active,
   sort_order = excluded.sort_order;
+
+notify pgrst, 'reload schema';

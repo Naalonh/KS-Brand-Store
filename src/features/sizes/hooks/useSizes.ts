@@ -121,8 +121,10 @@ export function useSizes(accessToken?: string) {
 
       resetForm()
       return true
-    } catch {
-      setError('Could not save this size in Supabase.')
+    } catch (error) {
+      setError(
+        `Could not save this size in Supabase. ${getErrorMessage(error)}`,
+      )
       return false
     }
   }
@@ -163,11 +165,17 @@ export function useSizes(accessToken?: string) {
   }
 
   const deleteSize = async (sizeId: string) => {
+    const size = sizes.find((currentSize) => currentSize.id === sizeId)
+
+    if (!size) {
+      return false
+    }
+
     setError('')
 
     if (canUseSupabaseSizes && accessToken) {
       try {
-        await deleteRemoteSize(sizeId, accessToken)
+        await deleteRemoteSize(size, accessToken)
       } catch {
         setError('Could not delete this size in Supabase.')
         return false
@@ -201,3 +209,6 @@ export function useSizes(accessToken?: string) {
     updateForm,
   }
 }
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : 'Please try again.'

@@ -22,7 +22,10 @@ export async function supabaseFetch<T>(
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(errorText || `Supabase request failed: ${response.status}`)
+    throw new Error(
+      getSupabaseErrorMessage(errorText) ||
+        `Supabase request failed: ${response.status}`,
+    )
   }
 
   if (response.status === 204) {
@@ -30,4 +33,24 @@ export async function supabaseFetch<T>(
   }
 
   return (await response.json()) as T
+}
+
+const getSupabaseErrorMessage = (errorText: string) => {
+  if (!errorText) {
+    return ''
+  }
+
+  try {
+    const errorBody = JSON.parse(errorText) as {
+      details?: string
+      hint?: string
+      message?: string
+    }
+
+    return [errorBody.message, errorBody.details, errorBody.hint]
+      .filter(Boolean)
+      .join(' ')
+  } catch {
+    return errorText
+  }
 }
