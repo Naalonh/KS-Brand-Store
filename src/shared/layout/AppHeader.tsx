@@ -16,7 +16,7 @@ export function AppHeader({
   onLogout,
   onOpenView,
 }: AppHeaderProps) {
-  if (currentView === 'admin') {
+  if (currentView === 'admin' || currentView === 'adminLogin') {
     return (
       <header className="sticky top-0 z-20 border-b border-[#9C7A42]/25 bg-[#130E0D]/95 backdrop-blur">
         <div className="flex min-h-20 w-full items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:pl-[18rem] lg:pr-8">
@@ -81,9 +81,29 @@ export function AppHeader({
             href="https://m.me/ksbrandstore"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-[#E4B45A]/70 bg-[#E4B45A] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#000000] shadow-[0_0_30px_rgba(228,180,90,0.2)] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:min-h-11 sm:px-5 sm:text-sm"
+            aria-label="Order on Messenger"
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#E4B45A]/70 bg-[#E4B45A] text-[#000000] shadow-[0_0_30px_rgba(228,180,90,0.2)] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
           >
-            Order
+            <svg
+              aria-hidden="true"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.2"
+              viewBox="0 0 24 24"
+            >
+              <path d="M6 8h12l-1 12H7L6 8Z" />
+              <path d="M9 8a3 3 0 0 1 6 0" />
+            </svg>
+            <span className="sr-only">Order on Messenger</span>
+            <span
+              aria-hidden="true"
+              className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-black leading-none text-white"
+            >
+              1
+            </span>
           </a>
         </div>
       </div>

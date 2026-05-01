@@ -1,11 +1,32 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type View = 'store' | 'admin'
+export type View = 'store' | 'admin' | 'adminLogin'
 
-const getViewPath = (view: View) => (view === 'admin' ? '/admin' : '/')
+const getViewPath = (view: View) => {
+  if (view === 'admin') {
+    return '/admin'
+  }
 
-const getCurrentView = (): View =>
-  window.location.pathname.replace(/\/+$/, '') === '/admin' ? 'admin' : 'store'
+  if (view === 'adminLogin') {
+    return '/admin/login'
+  }
+
+  return '/'
+}
+
+const getCurrentView = (): View => {
+  const path = window.location.pathname.replace(/\/+$/, '')
+
+  if (path === '/admin') {
+    return 'admin'
+  }
+
+  if (path === '/admin/login') {
+    return 'adminLogin'
+  }
+
+  return 'store'
+}
 
 export function usePathView() {
   const [currentView, setCurrentView] = useState<View>(() =>
@@ -27,15 +48,22 @@ export function usePathView() {
     return () => window.removeEventListener('popstate', syncViewFromPath)
   }, [])
 
-  const openView = useCallback((view: View) => {
-    const path = getViewPath(view)
+  const openView = useCallback(
+    (view: View, options: { replace?: boolean } = {}) => {
+      const path = getViewPath(view)
 
-    if (window.location.pathname !== path || window.location.hash) {
-      window.history.pushState(null, '', path)
-    }
+      if (window.location.pathname !== path || window.location.hash) {
+        const updateHistory = options.replace
+          ? window.history.replaceState
+          : window.history.pushState
 
-    setCurrentView(view)
-  }, [])
+        updateHistory.call(window.history, null, '', path)
+      }
+
+      setCurrentView(view)
+    },
+    [],
+  )
 
   return { currentView, openView }
 }

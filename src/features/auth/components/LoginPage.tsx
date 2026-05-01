@@ -1,6 +1,4 @@
 import { useState, type FormEvent } from 'react'
-import { adminAuthConfig } from '../authConfig'
-import { isSupabaseConfigured } from '../../supabase/supabaseConfig'
 
 type LoginPageProps = {
   onLogin: (email: string, password: string) => Promise<boolean>
@@ -44,19 +42,6 @@ export function LoginPage({ onLogin, onViewStore }: LoginPageProps) {
           Product management is protected by an admin session before the admin
           dashboard is shown.
         </p>
-        <div className="mt-5 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] px-4 py-3 text-sm leading-6 text-[#B8A98A]">
-          {isSupabaseConfigured ? (
-            <span>
-              Supabase Auth is active. Sign in with a Supabase Auth user that
-              has admin role metadata.
-            </span>
-          ) : (
-            <span>
-              Local dev auth is active. Use {adminAuthConfig.email} /{' '}
-              {adminAuthConfig.password}.
-            </span>
-          )}
-        </div>
 
         <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
           <label className="grid gap-2">
