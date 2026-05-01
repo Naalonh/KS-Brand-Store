@@ -67,7 +67,7 @@ export function LoginPage({ onLogin, onViewStore }: LoginPageProps) {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="admin@ksbrand.store"
+              placeholder="admin@example.com"
               autoComplete="username"
               required
               className="min-h-12 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] px-4 text-[#FFF8E7] outline-none transition placeholder:text-[#B8A98A]/55 focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"

@@ -1,4 +1,8 @@
 export const adminAuthConfig = {
-  email: import.meta.env.VITE_ADMIN_EMAIL ?? 'admin@ksbrand.store',
-  password: import.meta.env.VITE_ADMIN_PASSWORD ?? 'ks-admin-2026',
+  email: import.meta.env.VITE_ADMIN_EMAIL ?? '',
+  password: import.meta.env.VITE_ADMIN_PASSWORD ?? '',
 }
+
+export const isLocalAdminAuthConfigured = Boolean(
+  adminAuthConfig.email && adminAuthConfig.password,
+)

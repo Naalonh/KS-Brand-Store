@@ -1,4 +1,4 @@
-import { adminAuthConfig } from '../authConfig'
+import { adminAuthConfig, isLocalAdminAuthConfigured } from '../authConfig'
 import {
   getSupabaseHeaders,
   isSupabaseConfigured,
@@ -58,6 +58,10 @@ export async function signInAdmin(email: string, password: string) {
   if (!isSupabaseConfigured) {
     if (!import.meta.env.DEV) {
       throw new Error('Supabase environment variables are missing.')
+    }
+
+    if (!isLocalAdminAuthConfigured) {
+      throw new Error('Local admin credentials are missing.')
     }
 
     const isValidLocalLogin =
