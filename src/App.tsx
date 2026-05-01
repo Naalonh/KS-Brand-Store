@@ -135,7 +135,6 @@ function App() {
       ) : (
         <StorePage
           activeProducts={productsState.activeProducts}
-          featuredProduct={productsState.featuredProduct}
           onManageProducts={openProductManagement}
         />
       )}
