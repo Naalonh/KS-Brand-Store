@@ -3,7 +3,7 @@ import { AdminPage } from './features/admin/AdminPage'
 import type { AdminSection } from './features/admin/components/AdminSidebar'
 import { LoginPage } from './features/auth/components/LoginPage'
 import { useAdminSession } from './features/auth/hooks/useAdminSession'
-import { CardPage } from './features/card/CardPage'
+import { CartPage } from './features/cart/CartPage'
 import { MyStorePage } from './features/mystore/MyStorePage'
 import { useProducts } from './features/products/hooks/useProducts'
 import { StorePage } from './features/store/StorePage'
@@ -149,8 +149,8 @@ function App() {
           onManageProducts={openProductManagement}
           onViewHome={() => openView('store')}
         />
-      ) : currentView === 'card' ? (
-        <CardPage
+      ) : currentView === 'cart' ? (
+        <CartPage
           featuredProduct={productsState.featuredProduct}
           language={language}
           onViewHome={() => openView('store')}

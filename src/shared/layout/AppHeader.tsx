@@ -196,8 +196,8 @@ export function AppHeader({
           </button>
           <button
             type="button"
-            onClick={() => onOpenView('card')}
-            aria-label="Open order card"
+            onClick={() => onOpenView('cart')}
+            aria-label="Open cart"
             className="relative inline-flex h-12 w-12 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
           >
             <svg

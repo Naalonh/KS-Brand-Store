@@ -1,24 +1,24 @@
 import { Footer } from '../../shared/layout/Footer'
 import type { Product } from '../products/types'
 
-type CardPageProps = {
+type CartPageProps = {
   featuredProduct: Product
   language: 'en' | 'km'
   onViewHome: () => void
 }
 
-export function CardPage({
+export function CartPage({
   featuredProduct,
   language,
   onViewHome,
-}: CardPageProps) {
+}: CartPageProps) {
   return (
     <>
       <main>
         <section className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-[1fr_0.9fr] lg:items-start lg:px-8 lg:py-20">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
-              Order Card
+              Order Cart
             </p>
             <h1 className="mt-3 text-4xl font-black leading-tight text-[#FFF8E7] sm:text-5xl">
               Your selected pair is ready.
@@ -57,7 +57,7 @@ export function CardPage({
 
           <aside className="rounded-3xl border border-[#9C7A42]/40 bg-[#130E0D] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
             <p className="text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
-              Card Summary
+              Cart Summary
             </p>
 
             <div className="mt-6 grid gap-4 text-sm font-semibold text-[#B8A98A]">
