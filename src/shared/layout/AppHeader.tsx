@@ -92,7 +92,7 @@ export function AppHeader({
           </a>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {isAuthenticated ? (
             <button
               type="button"
@@ -102,6 +102,35 @@ export function AppHeader({
               Logout
             </button>
           ) : null}
+          <button
+            type="button"
+            onClick={onToggleLanguage}
+            aria-label={labels.languageLabel}
+            className="relative hidden h-10 w-36 shrink-0 items-center rounded-full border border-[#9C7A42]/55 bg-[#000000] p-1 text-[0.68rem] font-black text-[#B8A98A] transition focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:inline-flex"
+          >
+            <span
+              aria-hidden="true"
+              className={`absolute inset-y-1 w-[4.25rem] rounded-full bg-[#E4B45A] transition-transform ${
+                language === 'km' ? 'translate-x-0' : 'translate-x-[4.25rem]'
+              }`}
+            />
+            <span
+              className={`relative z-10 inline-flex w-[4.25rem] items-center justify-center gap-1 ${
+                language === 'km' ? 'text-[#000000]' : 'text-[#B8A98A]'
+              }`}
+            >
+              <span aria-hidden="true">🇰🇭</span>
+              ខ្មែរ
+            </span>
+            <span
+              className={`relative z-10 inline-flex w-[4.25rem] items-center justify-center gap-1 ${
+                language === 'en' ? 'text-[#000000]' : 'text-[#B8A98A]'
+              }`}
+            >
+              <span aria-hidden="true">🇬🇧</span>
+              English
+            </span>
+          </button>
           <button
             type="button"
             onClick={() => onOpenView('mystore')}
@@ -196,35 +225,6 @@ export function AppHeader({
                 <path d="M20.5 14.2A8 8 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" />
               </svg>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={onToggleLanguage}
-            aria-label={labels.languageLabel}
-            className="relative inline-flex h-10 w-[9.75rem] shrink-0 items-center rounded-full border border-[#9C7A42]/45 bg-[#000000] p-1 text-[0.7rem] font-black text-[#B8A98A] transition focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
-          >
-            <span
-              aria-hidden="true"
-              className={`absolute inset-y-1 w-[4.85rem] rounded-full bg-[#E4B45A] transition-transform ${
-                language === 'km' ? 'translate-x-0' : 'translate-x-[4.85rem]'
-              }`}
-            />
-            <span
-              className={`relative z-10 inline-flex w-[4.85rem] items-center justify-center gap-1 ${
-                language === 'km' ? 'text-[#000000]' : 'text-[#B8A98A]'
-              }`}
-            >
-              <span aria-hidden="true">🇰🇭</span>
-              ខ្មែរ
-            </span>
-            <span
-              className={`relative z-10 inline-flex w-[4.85rem] items-center justify-center gap-1 ${
-                language === 'en' ? 'text-[#000000]' : 'text-[#B8A98A]'
-              }`}
-            >
-              <span aria-hidden="true">🇬🇧</span>
-              English
-            </span>
           </button>
         </div>
       </div>
