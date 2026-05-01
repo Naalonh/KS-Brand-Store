@@ -26,7 +26,7 @@ The size SQL creates:
 - `public.sizes`
 - RLS policies for public active-size reads
 - admin-only insert/update/delete based on `raw_app_meta_data.role = "admin"`
-- starter size rows for Women, Men, and Display Presets
+- flat starter size rows with name and active status
 
 The product image SQL creates:
 

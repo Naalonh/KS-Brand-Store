@@ -7,6 +7,7 @@ import { CartPage } from './features/cart/CartPage'
 import { useCategories } from './features/categories/hooks/useCategories'
 import { MyStorePage } from './features/mystore/MyStorePage'
 import { useProducts } from './features/products/hooks/useProducts'
+import { useSizes } from './features/sizes/hooks/useSizes'
 import { StorePage } from './features/store/StorePage'
 import { usePathView } from './hooks/usePathView'
 import { AppHeader } from './shared/layout/AppHeader'
@@ -45,6 +46,7 @@ function App() {
   const adminSession = useAdminSession()
   const categoriesState = useCategories(adminSession.accessToken)
   const productsState = useProducts(adminSession.accessToken)
+  const sizesState = useSizes(adminSession.accessToken)
 
   const isAdminRoute = currentView === 'admin'
   const isAdminLoginRoute = currentView === 'adminLogin'
@@ -139,6 +141,7 @@ function App() {
           categoriesState={categoriesState}
           onSectionChange={setAdminSection}
           productsState={productsState}
+          sizesState={sizesState}
         />
       ) : isAdminAreaRoute ? (
         <LoginPage

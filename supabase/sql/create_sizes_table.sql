@@ -12,19 +12,80 @@ $$;
 
 create table if not exists public.sizes (
   id uuid primary key default gen_random_uuid(),
-  group_key text not null check (group_key ~ '^[a-z0-9][a-z0-9-]{0,62}$'),
-  group_label text not null check (char_length(trim(group_label)) between 1 and 80),
-  size_label text not null check (char_length(trim(size_label)) between 1 and 40),
+  name text,
   active boolean not null default true,
-  group_sort_order integer not null default 0,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint sizes_group_size_unique unique (group_key, size_label)
+  updated_at timestamptz not null default now()
 );
 
-create index if not exists sizes_active_group_sort_order_idx
-  on public.sizes (active, group_sort_order, sort_order, created_at desc);
+alter table public.sizes
+add column if not exists name text;
+
+alter table public.sizes
+add column if not exists active boolean not null default true;
+
+alter table public.sizes
+add column if not exists sort_order integer not null default 0;
+
+alter table public.sizes
+add column if not exists created_at timestamptz not null default now();
+
+alter table public.sizes
+add column if not exists updated_at timestamptz not null default now();
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'sizes'
+      and column_name = 'size_label'
+  ) then
+    execute '
+      update public.sizes
+      set name = size_label
+      where (name is null or char_length(trim(name)) = 0)
+        and size_label is not null
+    ';
+  end if;
+end;
+$$;
+
+update public.sizes
+set name = 'Size ' || left(id::text, 8)
+where name is null or char_length(trim(name)) = 0;
+
+alter table public.sizes
+alter column name set not null;
+
+alter table public.sizes
+drop constraint if exists sizes_group_size_unique;
+
+alter table public.sizes
+drop constraint if exists sizes_name_length_check;
+
+alter table public.sizes
+add constraint sizes_name_length_check
+check (char_length(trim(name)) between 1 and 40);
+
+alter table public.sizes
+drop column if exists group_key;
+
+alter table public.sizes
+drop column if exists group_label;
+
+alter table public.sizes
+drop column if exists size_label;
+
+alter table public.sizes
+drop column if exists group_sort_order;
+
+drop index if exists sizes_active_group_sort_order_idx;
+
+create index if not exists sizes_active_sort_order_idx
+  on public.sizes (active, sort_order, created_at desc);
 
 create or replace function public.set_sizes_updated_at()
 returns trigger
@@ -87,30 +148,32 @@ revoke all on table public.sizes from anon, authenticated;
 grant select on table public.sizes to anon;
 grant select, insert, update, delete on table public.sizes to authenticated;
 
+delete from public.sizes
+where id in (
+  '00000000-0000-4000-8000-000000000201',
+  '00000000-0000-4000-8000-000000000202',
+  '00000000-0000-4000-8000-000000000203'
+)
+and name in ('EU 39', 'EU 40', 'EU 41');
+
 insert into public.sizes
-  (id, group_key, group_label, size_label, active, group_sort_order, sort_order)
+  (id, name, active, sort_order)
 values
-  ('00000000-0000-4000-8000-000000000101', 'women', 'Women', 'EU 36', true, 10, 10),
-  ('00000000-0000-4000-8000-000000000102', 'women', 'Women', 'EU 37', true, 10, 20),
-  ('00000000-0000-4000-8000-000000000103', 'women', 'Women', 'EU 38', true, 10, 30),
-  ('00000000-0000-4000-8000-000000000104', 'women', 'Women', 'EU 39', true, 10, 40),
-  ('00000000-0000-4000-8000-000000000105', 'women', 'Women', 'EU 40', true, 10, 50),
-  ('00000000-0000-4000-8000-000000000106', 'women', 'Women', 'EU 41', true, 10, 60),
-  ('00000000-0000-4000-8000-000000000201', 'men', 'Men', 'EU 39', true, 20, 10),
-  ('00000000-0000-4000-8000-000000000202', 'men', 'Men', 'EU 40', true, 20, 20),
-  ('00000000-0000-4000-8000-000000000203', 'men', 'Men', 'EU 41', true, 20, 30),
-  ('00000000-0000-4000-8000-000000000204', 'men', 'Men', 'EU 42', true, 20, 40),
-  ('00000000-0000-4000-8000-000000000205', 'men', 'Men', 'EU 43', true, 20, 50),
-  ('00000000-0000-4000-8000-000000000206', 'men', 'Men', 'EU 44', true, 20, 60),
-  ('00000000-0000-4000-8000-000000000207', 'men', 'Men', 'EU 45', true, 20, 70),
-  ('00000000-0000-4000-8000-000000000301', 'display-presets', 'Display Presets', 'EU 38-44', true, 30, 10),
-  ('00000000-0000-4000-8000-000000000302', 'display-presets', 'Display Presets', 'EU 39-45', true, 30, 20),
-  ('00000000-0000-4000-8000-000000000303', 'display-presets', 'Display Presets', 'EU 40-46', true, 30, 30)
+  ('00000000-0000-4000-8000-000000000101', 'EU 36', true, 10),
+  ('00000000-0000-4000-8000-000000000102', 'EU 37', true, 20),
+  ('00000000-0000-4000-8000-000000000103', 'EU 38', true, 30),
+  ('00000000-0000-4000-8000-000000000104', 'EU 39', true, 40),
+  ('00000000-0000-4000-8000-000000000105', 'EU 40', true, 50),
+  ('00000000-0000-4000-8000-000000000106', 'EU 41', true, 60),
+  ('00000000-0000-4000-8000-000000000204', 'EU 42', true, 70),
+  ('00000000-0000-4000-8000-000000000205', 'EU 43', true, 80),
+  ('00000000-0000-4000-8000-000000000206', 'EU 44', true, 90),
+  ('00000000-0000-4000-8000-000000000207', 'EU 45', true, 100),
+  ('00000000-0000-4000-8000-000000000301', 'EU 38-44', true, 110),
+  ('00000000-0000-4000-8000-000000000302', 'EU 39-45', true, 120),
+  ('00000000-0000-4000-8000-000000000303', 'EU 40-46', true, 130)
 on conflict (id) do update
 set
-  group_key = excluded.group_key,
-  group_label = excluded.group_label,
-  size_label = excluded.size_label,
+  name = excluded.name,
   active = excluded.active,
-  group_sort_order = excluded.group_sort_order,
   sort_order = excluded.sort_order;
