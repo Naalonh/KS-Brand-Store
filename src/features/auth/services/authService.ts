@@ -30,6 +30,7 @@ type SupabaseUser = {
 
 const TOKEN_REFRESH_MARGIN_SECONDS = 60
 const WRONG_EMAIL_MESSAGE = 'Wrong email.'
+const DEFAULT_RESET_RETRY_AFTER_SECONDS = 65
 const RESET_RATE_LIMIT_MESSAGE =
   'Too many reset emails. Please wait before sending another link.'
 
@@ -40,6 +41,41 @@ const isUserNotFoundError = (message: string) =>
 
 const isRateLimitError = (message: string) =>
   /rate limit|too many|429/i.test(message)
+
+export class PasswordResetRateLimitError extends Error {
+  retryAfterSeconds: number
+
+  constructor(retryAfterSeconds = DEFAULT_RESET_RETRY_AFTER_SECONDS) {
+    super(RESET_RATE_LIMIT_MESSAGE)
+    this.name = 'PasswordResetRateLimitError'
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
+const getRetryAfterSeconds = (response: Response) => {
+  const retryAfter = response.headers.get('Retry-After')
+
+  if (!retryAfter) {
+    return DEFAULT_RESET_RETRY_AFTER_SECONDS
+  }
+
+  const retryAfterSeconds = Number(retryAfter)
+
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return Math.ceil(retryAfterSeconds)
+  }
+
+  const retryAfterDate = Date.parse(retryAfter)
+
+  if (!Number.isNaN(retryAfterDate)) {
+    return Math.max(
+      DEFAULT_RESET_RETRY_AFTER_SECONDS,
+      Math.ceil((retryAfterDate - Date.now()) / 1000),
+    )
+  }
+
+  return DEFAULT_RESET_RETRY_AFTER_SECONDS
+}
 
 const getSessionExpiresAt = (session: SupabasePasswordSession) =>
   session.expires_at ??
@@ -138,7 +174,7 @@ export async function requestAdminPasswordReset(email: string) {
     }
 
     if (response.status === 429 || isRateLimitError(errorMessage)) {
-      throw new Error(RESET_RATE_LIMIT_MESSAGE)
+      throw new PasswordResetRateLimitError(getRetryAfterSeconds(response))
     }
 
     throw new Error(errorMessage)

@@ -1,5 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { requestAdminPasswordReset } from '../services/authService'
+import {
+  PasswordResetRateLimitError,
+  requestAdminPasswordReset,
+} from '../services/authService'
 
 type LoginPageProps = {
   onLogin: (email: string, password: string) => Promise<boolean>
@@ -95,8 +98,10 @@ export function LoginPage({ onLogin, onViewStore }: LoginPageProps) {
           ? resetRequestError.message
           : 'Could not send password reset link.'
 
-      if (/rate limit|too many|please wait/i.test(message)) {
-        setResetCooldownSeconds(60)
+      if (resetRequestError instanceof PasswordResetRateLimitError) {
+        setResetCooldownSeconds(resetRequestError.retryAfterSeconds)
+      } else if (/rate limit|too many|please wait/i.test(message)) {
+        setResetCooldownSeconds(65)
       }
 
       setResetError(
