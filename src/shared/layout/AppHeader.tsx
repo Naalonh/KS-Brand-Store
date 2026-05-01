@@ -156,7 +156,7 @@ export function AppHeader({
               }`}
             />
             <span
-              className={`relative z-10 inline-flex w-[4.25rem] items-center justify-center gap-1 ${
+              className={`khmer-font relative z-10 inline-flex w-[4.25rem] items-center justify-center gap-1 ${
                 language === 'km' ? 'text-[#000000]' : 'text-[#B8A98A]'
               }`}
             >

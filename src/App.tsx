@@ -104,6 +104,7 @@ function App() {
   return (
     <div
       className="min-h-screen bg-[#000000] font-['Inter'] text-[#FFF8E7]"
+      data-language={language}
       data-theme={theme}
     >
       <AppHeader
