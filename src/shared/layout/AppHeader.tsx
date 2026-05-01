@@ -81,6 +81,7 @@ export function AppHeader({
   theme,
 }: AppHeaderProps) {
   const labels = navLabels[language]
+  const isKhmer = language === 'km'
 
   if (currentView === 'admin' || currentView === 'adminLogin') {
     return (
@@ -147,29 +148,11 @@ export function AppHeader({
             type="button"
             onClick={onToggleLanguage}
             aria-label={labels.languageLabel}
-            className="relative hidden h-10 w-36 shrink-0 items-center rounded-full border border-[#9C7A42]/55 bg-[#000000] p-1 text-[0.68rem] font-black text-[#B8A98A] transition focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:inline-flex"
+            className="hidden h-10 min-w-[6.75rem] shrink-0 items-center justify-center gap-2 rounded-full border border-[#9C7A42]/55 bg-[#000000] px-3 text-[0.72rem] font-black text-[#B8A98A] transition hover:border-[#E4B45A] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:inline-flex"
           >
-            <span
-              aria-hidden="true"
-              className={`absolute inset-y-1 w-[4.25rem] rounded-full bg-[#E4B45A] transition-transform ${
-                language === 'km' ? 'translate-x-0' : 'translate-x-[4.25rem]'
-              }`}
-            />
-            <span
-              className={`khmer-font relative z-10 inline-flex w-[4.25rem] items-center justify-center gap-1 ${
-                language === 'km' ? 'text-[#000000]' : 'text-[#B8A98A]'
-              }`}
-            >
-              <CambodiaFlagIcon />
-              ខ្មែរ
-            </span>
-            <span
-              className={`relative z-10 inline-flex w-[4.25rem] items-center justify-center gap-1 ${
-                language === 'en' ? 'text-[#000000]' : 'text-[#B8A98A]'
-              }`}
-            >
-              <EnglishFlagIcon />
-              English
+            {isKhmer ? <CambodiaFlagIcon /> : <EnglishFlagIcon />}
+            <span className={isKhmer ? 'khmer-font' : undefined}>
+              {isKhmer ? 'ខ្មែរ' : 'English'}
             </span>
           </button>
           <button
