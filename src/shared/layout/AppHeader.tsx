@@ -83,7 +83,7 @@ export function AppHeader({
           ) : null}
           <button
             type="button"
-            onClick={() => onOpenView('store')}
+            onClick={() => onOpenView('mystore')}
             aria-label="Open store"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
           >
@@ -103,11 +103,10 @@ export function AppHeader({
               <path d="M9 19v-5h6v5" />
             </svg>
           </button>
-          <a
-            href="https://m.me/ksbrandstore"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Order on Messenger"
+          <button
+            type="button"
+            onClick={() => onOpenView('card')}
+            aria-label="Open order card"
             className="relative inline-flex h-12 w-12 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
           >
             <svg
@@ -130,7 +129,7 @@ export function AppHeader({
             >
               1
             </span>
-          </a>
+          </button>
           <button
             type="button"
             onClick={onToggleTheme}

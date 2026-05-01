@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type View = 'store' | 'admin' | 'adminLogin'
+export type View = 'store' | 'admin' | 'adminLogin' | 'mystore' | 'card'
 
 const getViewPath = (view: View) => {
   if (view === 'admin') {
@@ -9,6 +9,14 @@ const getViewPath = (view: View) => {
 
   if (view === 'adminLogin') {
     return '/admin/login'
+  }
+
+  if (view === 'mystore') {
+    return '/mystore'
+  }
+
+  if (view === 'card') {
+    return '/card'
   }
 
   return '/'
@@ -23,6 +31,14 @@ const getCurrentView = (): View => {
 
   if (path === '/admin/login') {
     return 'adminLogin'
+  }
+
+  if (path === '/mystore') {
+    return 'mystore'
+  }
+
+  if (path === '/card') {
+    return 'card'
   }
 
   return 'store'

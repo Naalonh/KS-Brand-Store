@@ -3,6 +3,8 @@ import { AdminPage } from './features/admin/AdminPage'
 import type { AdminSection } from './features/admin/components/AdminSidebar'
 import { LoginPage } from './features/auth/components/LoginPage'
 import { useAdminSession } from './features/auth/hooks/useAdminSession'
+import { CardPage } from './features/card/CardPage'
+import { MyStorePage } from './features/mystore/MyStorePage'
 import { useProducts } from './features/products/hooks/useProducts'
 import { StorePage } from './features/store/StorePage'
 import { usePathView } from './hooks/usePathView'
@@ -70,6 +72,10 @@ function App() {
     return isLoggedIn
   }
 
+  const openProductManagement = () => {
+    openView(adminSession.isAuthenticated ? 'admin' : 'adminLogin')
+  }
+
   const toggleTheme = () => {
     setTheme((currentTheme) =>
       currentTheme === 'dark' ? 'light' : 'dark',
@@ -114,13 +120,23 @@ function App() {
           onLogin={handleAdminLogin}
           onViewStore={() => openView('store')}
         />
+      ) : currentView === 'mystore' ? (
+        <MyStorePage
+          activeProducts={productsState.activeProducts}
+          featuredProduct={productsState.featuredProduct}
+          onManageProducts={openProductManagement}
+          onViewHome={() => openView('store')}
+        />
+      ) : currentView === 'card' ? (
+        <CardPage
+          featuredProduct={productsState.featuredProduct}
+          onViewHome={() => openView('store')}
+        />
       ) : (
         <StorePage
           activeProducts={productsState.activeProducts}
           featuredProduct={productsState.featuredProduct}
-          onManageProducts={() =>
-            openView(adminSession.isAuthenticated ? 'admin' : 'adminLogin')
-          }
+          onManageProducts={openProductManagement}
         />
       )}
     </div>
