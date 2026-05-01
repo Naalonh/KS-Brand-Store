@@ -113,9 +113,6 @@ export function SizePanel({ sizesState }: SizePanelProps) {
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
               Sizes
             </p>
-            <h3 className="mt-2 text-2xl font-black text-[#FFF8E7]">
-              Size table
-            </h3>
           </div>
           <span className="text-sm font-semibold text-[#B8A98A]">
             {sizesState.sizes.length} total
