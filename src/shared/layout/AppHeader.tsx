@@ -66,8 +66,8 @@ export function AppHeader({
           <a href="#products" className="transition hover:text-[#FDD97D]">
             Collection
           </a>
-          <a href="#contact" className="transition hover:text-[#FDD97D]">
-            Concierge
+          <a href="#about-us" className="transition hover:text-[#FDD97D]">
+            About Us
           </a>
         </nav>
 

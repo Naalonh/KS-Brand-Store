@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <footer id="contact" className="border-t border-[#9C7A42]/25 bg-[#130E0D]">
+    <footer id="about-us" className="border-t border-[#9C7A42]/25 bg-[#130E0D]">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
         <div>
           <p className="text-xl font-black uppercase tracking-[0.18em] text-[#FFF8E7]">
