@@ -7,11 +7,6 @@ type CategoriesPanelProps = {
 
 export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const categorySourceLabel = categoriesState.isLoading
-    ? 'loading'
-    : categoriesState.source === 'supabase'
-      ? 'Supabase'
-      : 'local fallback'
 
   const closeModal = () => {
     categoriesState.resetForm()
@@ -39,19 +34,6 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
             <h2 className="mt-2 text-3xl font-black text-[#FFF8E7]">
               Store categories
             </h2>
-            <p className="mt-3 max-w-2xl text-[#B8A98A]">
-              Organize products into storefront groups for browsing and future
-              filters. Category data is using{' '}
-              <span className="font-black text-[#FDD97D]">
-                {categorySourceLabel}
-              </span>
-              .
-            </p>
-            {categoriesState.error ? (
-              <p className="mt-3 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 py-3 text-sm font-semibold text-[#FDD97D]">
-                {categoriesState.error}
-              </p>
-            ) : null}
           </div>
           <button
             type="button"
@@ -69,9 +51,6 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
               Categories
             </p>
-            <h3 className="mt-2 text-2xl font-black text-[#FFF8E7]">
-              Category table
-            </h3>
           </div>
           <span className="text-sm font-semibold text-[#B8A98A]">
             {categoriesState.categories.length} total

@@ -55,7 +55,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
         ...currentToasts.slice(0, 3),
       ])
 
-      window.setTimeout(() => dismissToast(toastId), 4200)
+      window.setTimeout(() => dismissToast(toastId), 2500)
     },
     [dismissToast],
   )

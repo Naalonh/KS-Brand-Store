@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 
 export type View = 'store' | 'admin' | 'adminLogin' | 'mystore' | 'cart'
 
+const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/'
+
 const getViewPath = (view: View) => {
   if (view === 'admin') {
-    return '/admin'
+    return '/admin/dashboard'
   }
 
   if (view === 'adminLogin') {
@@ -22,15 +24,15 @@ const getViewPath = (view: View) => {
   return '/'
 }
 
-const getCurrentView = (): View => {
-  const path = window.location.pathname.replace(/\/+$/, '')
-
-  if (path === '/admin') {
-    return 'admin'
-  }
+const getCurrentViewFromPath = (pathname: string): View => {
+  const path = normalizePath(pathname)
 
   if (path === '/admin/login') {
     return 'adminLogin'
+  }
+
+  if (path === '/admin' || path.startsWith('/admin/')) {
+    return 'admin'
   }
 
   if (path === '/mystore') {
@@ -44,18 +46,30 @@ const getCurrentView = (): View => {
   return 'store'
 }
 
+const getCurrentView = () => getCurrentViewFromPath(window.location.pathname)
+
 export function usePathView() {
+  const [currentPath, setCurrentPath] = useState(() =>
+    normalizePath(window.location.pathname),
+  )
   const [currentView, setCurrentView] = useState<View>(() =>
     window.location.hash === '#admin' ? 'admin' : getCurrentView(),
   )
 
   useEffect(() => {
     const syncViewFromPath = () => {
-      setCurrentView(getCurrentView())
+      const nextPath = normalizePath(window.location.pathname)
+
+      setCurrentPath(nextPath)
+      setCurrentView(getCurrentViewFromPath(nextPath))
     }
 
     if (window.location.hash === '#admin') {
-      window.history.replaceState(null, '', '/admin')
+      window.history.replaceState(null, '', '/admin/dashboard')
+    }
+
+    if (normalizePath(window.location.pathname) === '/admin') {
+      window.history.replaceState(null, '', '/admin/dashboard')
     }
 
     syncViewFromPath()
@@ -64,22 +78,33 @@ export function usePathView() {
     return () => window.removeEventListener('popstate', syncViewFromPath)
   }, [])
 
-  const openView = useCallback(
-    (view: View, options: { replace?: boolean } = {}) => {
-      const path = getViewPath(view)
+  const openPath = useCallback(
+    (path: string, options: { replace?: boolean } = {}) => {
+      const nextPath = normalizePath(path)
 
-      if (window.location.pathname !== path || window.location.hash) {
+      if (
+        normalizePath(window.location.pathname) !== nextPath ||
+        window.location.hash
+      ) {
         const updateHistory = options.replace
           ? window.history.replaceState
           : window.history.pushState
 
-        updateHistory.call(window.history, null, '', path)
+        updateHistory.call(window.history, null, '', nextPath)
       }
 
-      setCurrentView(view)
+      setCurrentPath(nextPath)
+      setCurrentView(getCurrentViewFromPath(nextPath))
     },
     [],
   )
 
-  return { currentView, openView }
+  const openView = useCallback(
+    (view: View, options: { replace?: boolean } = {}) => {
+      openPath(getViewPath(view), options)
+    },
+    [openPath],
+  )
+
+  return { currentPath, currentView, openPath, openView }
 }

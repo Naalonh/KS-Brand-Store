@@ -1,6 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AdminPage } from './features/admin/AdminPage'
-import type { AdminSection } from './features/admin/components/AdminSidebar'
+import {
+  getAdminSectionFromPath,
+  getAdminSectionPath,
+  isAdminSectionPath,
+  type AdminSection,
+} from './features/admin/adminSections'
 import { LoginPage } from './features/auth/components/LoginPage'
 import { useAdminSession } from './features/auth/hooks/useAdminSession'
 import { CartPage } from './features/cart/CartPage'
@@ -15,6 +20,7 @@ import { AppHeader } from './shared/layout/AppHeader'
 const adminTitles: Record<AdminSection, string> = {
   categories: 'Dashboard / Categories',
   dashboard: 'Dashboard',
+  orders: 'Dashboard / Orders',
   products: 'Dashboard / Products',
   size: 'Dashboard / Size',
 }
@@ -38,11 +44,12 @@ const getSavedLanguage = (): Language => {
 }
 
 function App() {
-  const { currentView, openView } = usePathView()
+  const { currentPath, currentView, openPath, openView } = usePathView()
   const [theme, setTheme] = useState<Theme>(getSavedTheme)
   const [language, setLanguage] = useState<Language>(getSavedLanguage)
-  const [adminSection, setAdminSection] =
-    useState<AdminSection>('dashboard')
+  const [adminSection, setAdminSection] = useState<AdminSection>(() =>
+    getAdminSectionFromPath(window.location.pathname),
+  )
   const adminSession = useAdminSession()
   const categoriesState = useCategories(adminSession.accessToken)
   const productsState = useProducts(adminSession.accessToken)
@@ -64,6 +71,27 @@ function App() {
   }, [language])
 
   useEffect(() => {
+    if (currentView !== 'admin') {
+      return
+    }
+
+    const nextSection = getAdminSectionFromPath(currentPath)
+    setAdminSection(nextSection)
+
+    if (!isAdminSectionPath(currentPath)) {
+      openPath(getAdminSectionPath(nextSection), { replace: true })
+    }
+  }, [currentPath, currentView, openPath])
+
+  const openAdminSection = useCallback(
+    (section: AdminSection, options: { replace?: boolean } = {}) => {
+      setAdminSection(section)
+      openPath(getAdminSectionPath(section), options)
+    },
+    [openPath],
+  )
+
+  useEffect(() => {
     if (adminSession.isRestoring) {
       return
     }
@@ -73,19 +101,21 @@ function App() {
     }
 
     if (isAdminLoginRoute && adminSession.isAuthenticated) {
-      openView('admin', { replace: true })
+      openAdminSection(adminSection, { replace: true })
     }
   }, [
+    adminSection,
     adminSession.isAuthenticated,
     adminSession.isRestoring,
     isAdminLoginRoute,
     isAdminRoute,
+    openAdminSection,
     openView,
   ])
 
   const handleAdminLogin = async (email: string, password: string) => {
     const isLoggedIn = await adminSession.login(email, password)
-    openView('admin')
+    openAdminSection(adminSection)
     return isLoggedIn
   }
 
@@ -139,7 +169,7 @@ function App() {
         <AdminPage
           activeSection={adminSection}
           categoriesState={categoriesState}
-          onSectionChange={setAdminSection}
+          onSectionChange={openAdminSection}
           productsState={productsState}
           sizesState={sizesState}
         />

@@ -1,26 +1,4 @@
-export type AdminSection = 'dashboard' | 'products' | 'categories' | 'size'
-
-const adminSections: Array<{
-  id: AdminSection
-  label: string
-}> = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-  },
-  {
-    id: 'products',
-    label: 'Products',
-  },
-  {
-    id: 'categories',
-    label: 'Categories',
-  },
-  {
-    id: 'size',
-    label: 'Size',
-  },
-]
+import { adminSections, type AdminSection } from '../adminSections'
 
 type AdminSidebarProps = {
   activeSection: AdminSection
@@ -48,7 +26,7 @@ export function AdminSidebar({
           </span>
         </div>
       </div>
-      <nav className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+      <nav className="grid gap-2 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-1">
         {adminSections.map((section) => {
           const isActive = activeSection === section.id
 

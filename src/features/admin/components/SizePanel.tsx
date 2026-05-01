@@ -11,11 +11,6 @@ export function SizePanel({ sizesState }: SizePanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const lastErrorToastRef = useRef('')
   const { showToast } = useToast()
-  const sizeSourceLabel = sizesState.isLoading
-    ? 'loading'
-    : sizesState.source === 'supabase'
-      ? 'Supabase'
-      : 'local fallback'
 
   useEffect(() => {
     if (!sizesState.error) {
@@ -88,14 +83,6 @@ export function SizePanel({ sizesState }: SizePanelProps) {
             <h2 className="mt-2 text-3xl font-black text-[#FFF8E7]">
               Product sizes
             </h2>
-            <p className="mt-3 max-w-2xl text-[#B8A98A]">
-              Manage available size names and whether each size is active.
-              Size data is using{' '}
-              <span className="font-black text-[#FDD97D]">
-                {sizeSourceLabel}
-              </span>
-              .
-            </p>
           </div>
           <button
             type="button"
