@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { SizesState } from '../../sizes/hooks/useSizes'
+import { useToast } from '../../../shared/toast/useToast'
 import { AdminInput } from './AdminInput'
 
 type SizePanelProps = {
@@ -8,11 +9,30 @@ type SizePanelProps = {
 
 export function SizePanel({ sizesState }: SizePanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const lastErrorToastRef = useRef('')
+  const { showToast } = useToast()
   const sizeSourceLabel = sizesState.isLoading
     ? 'loading'
     : sizesState.source === 'supabase'
       ? 'Supabase'
       : 'local fallback'
+
+  useEffect(() => {
+    if (!sizesState.error) {
+      lastErrorToastRef.current = ''
+      return
+    }
+
+    if (lastErrorToastRef.current === sizesState.error) {
+      return
+    }
+
+    lastErrorToastRef.current = sizesState.error
+    showToast({
+      message: sizesState.error,
+      tone: sizesState.error.includes('not ready yet') ? 'warning' : 'error',
+    })
+  }, [showToast, sizesState.error])
 
   const closeModal = () => {
     sizesState.resetForm()
@@ -24,9 +44,37 @@ export function SizePanel({ sizesState }: SizePanelProps) {
 
     if (didSubmit) {
       closeModal()
+      showToast({
+        message: 'Size was added successfully.',
+        tone: 'success',
+      })
     }
 
     return didSubmit
+  }
+
+  const toggleSizeStatus = async (sizeId: string, isActive: boolean) => {
+    const didUpdate = await sizesState.toggleSizeStatus(sizeId)
+
+    if (didUpdate) {
+      showToast({
+        message: isActive
+          ? 'Size was disabled successfully.'
+          : 'Size was activated successfully.',
+        tone: 'success',
+      })
+    }
+  }
+
+  const deleteSize = async (sizeId: string) => {
+    const didDelete = await sizesState.deleteSize(sizeId)
+
+    if (didDelete) {
+      showToast({
+        message: 'Size was deleted successfully.',
+        tone: 'success',
+      })
+    }
   }
 
   return (
@@ -48,11 +96,6 @@ export function SizePanel({ sizesState }: SizePanelProps) {
               </span>
               .
             </p>
-            {sizesState.error ? (
-              <p className="mt-3 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 py-3 text-sm font-semibold text-[#FDD97D]">
-                {sizesState.error}
-              </p>
-            ) : null}
           </div>
           <button
             type="button"
@@ -109,14 +152,16 @@ export function SizePanel({ sizesState }: SizePanelProps) {
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => sizesState.toggleSizeStatus(size.id)}
+                          onClick={() =>
+                            toggleSizeStatus(size.id, size.active)
+                          }
                           className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
                         >
                           {size.active ? 'Disable' : 'Activate'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => sizesState.deleteSize(size.id)}
+                          onClick={() => deleteSize(size.id)}
                           className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
                         >
                           Delete

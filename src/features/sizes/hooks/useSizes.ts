@@ -131,10 +131,11 @@ export function useSizes(accessToken?: string) {
     const size = sizes.find((currentSize) => currentSize.id === sizeId)
 
     if (!size) {
-      return
+      return false
     }
 
     const nextSize = { ...size, active: !size.active }
+    setError('')
 
     if (canUseSupabaseSizes && accessToken) {
       try {
@@ -145,10 +146,10 @@ export function useSizes(accessToken?: string) {
             currentSize.id === sizeId ? updatedSize : currentSize,
           ),
         )
-        return
+        return true
       } catch {
         setError('Could not update this size in Supabase.')
-        return
+        return false
       }
     }
 
@@ -157,21 +158,27 @@ export function useSizes(accessToken?: string) {
         currentSize.id === sizeId ? nextSize : currentSize,
       ),
     )
+
+    return true
   }
 
   const deleteSize = async (sizeId: string) => {
+    setError('')
+
     if (canUseSupabaseSizes && accessToken) {
       try {
         await deleteRemoteSize(sizeId, accessToken)
       } catch {
         setError('Could not delete this size in Supabase.')
-        return
+        return false
       }
     }
 
     setSizes((currentSizes) =>
       currentSizes.filter((size) => size.id !== sizeId),
     )
+
+    return true
   }
 
   const restoreDefaults = () => {
