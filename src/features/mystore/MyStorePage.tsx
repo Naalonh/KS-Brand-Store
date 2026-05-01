@@ -4,6 +4,7 @@ import type { Product } from '../products/types'
 type MyStorePageProps = {
   activeProducts: Product[]
   featuredProduct: Product
+  language: 'en' | 'km'
   onManageProducts: () => void
   onViewHome: () => void
 }
@@ -11,6 +12,7 @@ type MyStorePageProps = {
 export function MyStorePage({
   activeProducts,
   featuredProduct,
+  language,
   onManageProducts,
   onViewHome,
 }: MyStorePageProps) {
@@ -126,7 +128,7 @@ export function MyStorePage({
         </section>
       </main>
 
-      <Footer />
+      <Footer language={language} />
     </>
   )
 }

@@ -5,21 +5,42 @@ type AppHeaderProps = {
   adminTitle?: string
   currentView: View
   isAuthenticated: boolean
+  language: 'en' | 'km'
   onLogout: () => void
   onOpenView: (view: View) => void
+  onToggleLanguage: () => void
   onToggleTheme: () => void
   theme: 'dark' | 'light'
+}
+
+const navLabels = {
+  en: {
+    about: 'About Us',
+    collection: 'Collection',
+    languageLabel: 'Switch language',
+    store: 'Store',
+  },
+  km: {
+    about: 'អំពីយើង',
+    collection: 'ការប្រមូល',
+    languageLabel: 'ប្ដូរភាសា',
+    store: 'ហាង',
+  },
 }
 
 export function AppHeader({
   adminTitle = 'Dashboard',
   currentView,
   isAuthenticated,
+  language,
   onLogout,
   onOpenView,
+  onToggleLanguage,
   onToggleTheme,
   theme,
 }: AppHeaderProps) {
+  const labels = navLabels[language]
+
   if (currentView === 'admin' || currentView === 'adminLogin') {
     return (
       <header className="sticky top-0 z-20 border-b border-[#9C7A42]/25 bg-[#130E0D]/95 backdrop-blur">
@@ -61,13 +82,13 @@ export function AppHeader({
             onClick={() => onOpenView('store')}
             className="transition hover:text-[#FDD97D]"
           >
-            Store
+            {labels.store}
           </button>
           <a href="#products" className="transition hover:text-[#FDD97D]">
-            Collection
+            {labels.collection}
           </a>
           <a href="#about-us" className="transition hover:text-[#FDD97D]">
-            About Us
+            {labels.about}
           </a>
         </nav>
 
@@ -175,6 +196,35 @@ export function AppHeader({
                 <path d="M20.5 14.2A8 8 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" />
               </svg>
             )}
+          </button>
+          <button
+            type="button"
+            onClick={onToggleLanguage}
+            aria-label={labels.languageLabel}
+            className="relative inline-flex h-10 w-[9.75rem] shrink-0 items-center rounded-full border border-[#9C7A42]/45 bg-[#000000] p-1 text-[0.7rem] font-black text-[#B8A98A] transition focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+          >
+            <span
+              aria-hidden="true"
+              className={`absolute inset-y-1 w-[4.85rem] rounded-full bg-[#E4B45A] transition-transform ${
+                language === 'km' ? 'translate-x-0' : 'translate-x-[4.85rem]'
+              }`}
+            />
+            <span
+              className={`relative z-10 inline-flex w-[4.85rem] items-center justify-center gap-1 ${
+                language === 'km' ? 'text-[#000000]' : 'text-[#B8A98A]'
+              }`}
+            >
+              <span aria-hidden="true">🇰🇭</span>
+              ខ្មែរ
+            </span>
+            <span
+              className={`relative z-10 inline-flex w-[4.85rem] items-center justify-center gap-1 ${
+                language === 'en' ? 'text-[#000000]' : 'text-[#B8A98A]'
+              }`}
+            >
+              <span aria-hidden="true">🇬🇧</span>
+              English
+            </span>
           </button>
         </div>
       </div>

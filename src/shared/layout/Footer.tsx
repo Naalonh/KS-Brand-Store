@@ -35,26 +35,50 @@ const phoneLinks = [
   { href: 'tel:017948884', label: '017 948 884' },
 ]
 
-export function Footer() {
+const footerText = {
+  en: {
+    about: 'About Us',
+    contact: 'Contact',
+    description:
+      'Premium footwear curated for polished everyday style. Message us to confirm size, availability, delivery, and current collection drops.',
+    messenger: 'Open Messenger',
+    social: 'Social',
+  },
+  km: {
+    about: 'អំពីយើង',
+    contact: 'ទំនាក់ទំនង',
+    description:
+      'ស្បែកជើងលំដាប់ខ្ពស់សម្រាប់ស្ទាយប្រចាំថ្ងៃ។ ផ្ញើសារមកយើងដើម្បីបញ្ជាក់ទំហំ ស្តុក ការដឹកជញ្ជូន និងម៉ូដែលថ្មីៗ។',
+    messenger: 'បើក Messenger',
+    social: 'បណ្តាញសង្គម',
+  },
+}
+
+type FooterProps = {
+  language?: 'en' | 'km'
+}
+
+export function Footer({ language = 'en' }: FooterProps) {
+  const text = footerText[language]
+
   return (
     <footer id="about-us" className="border-t border-[#9C7A42]/25 bg-[#130E0D]">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.1fr_0.9fr] lg:grid-cols-[1.15fr_0.85fr_0.85fr] lg:px-8">
         <div>
           <p className="text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
-            About Us
+            {text.about}
           </p>
           <h2 className="mt-3 text-2xl font-black uppercase tracking-[0.18em] text-[#FFF8E7]">
             KS Brand Store
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-7 text-[#B8A98A]">
-            Premium footwear curated for polished everyday style. Message us to
-            confirm size, availability, delivery, and current collection drops.
+            {text.description}
           </p>
         </div>
 
         <div>
           <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-            Social
+            {text.social}
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
             {socialLinks.map((link) => (
@@ -85,7 +109,7 @@ export function Footer() {
 
         <div>
           <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-            Contact
+            {text.contact}
           </p>
           <div className="mt-4 grid gap-3">
             {phoneLinks.map((phone) => (
@@ -115,7 +139,7 @@ export function Footer() {
               rel="noreferrer"
               className="inline-flex min-h-12 items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
             >
-              Open Messenger
+              {text.messenger}
             </a>
           </div>
         </div>

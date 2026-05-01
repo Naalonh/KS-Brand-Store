@@ -18,8 +18,10 @@ const adminTitles: Record<AdminSection, string> = {
 }
 
 type Theme = 'dark' | 'light'
+type Language = 'en' | 'km'
 
 const THEME_KEY = 'ks-brand-store-theme'
+const LANGUAGE_KEY = 'ks-brand-store-language'
 
 const getSavedTheme = (): Theme => {
   const savedTheme = window.localStorage.getItem(THEME_KEY)
@@ -27,9 +29,16 @@ const getSavedTheme = (): Theme => {
   return savedTheme === 'light' ? 'light' : 'dark'
 }
 
+const getSavedLanguage = (): Language => {
+  const savedLanguage = window.localStorage.getItem(LANGUAGE_KEY)
+
+  return savedLanguage === 'km' ? 'km' : 'en'
+}
+
 function App() {
   const { currentView, openView } = usePathView()
   const [theme, setTheme] = useState<Theme>(getSavedTheme)
+  const [language, setLanguage] = useState<Language>(getSavedLanguage)
   const [adminSection, setAdminSection] =
     useState<AdminSection>('dashboard')
   const adminSession = useAdminSession()
@@ -45,6 +54,10 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem(THEME_KEY, theme)
   }, [theme])
+
+  useEffect(() => {
+    window.localStorage.setItem(LANGUAGE_KEY, language)
+  }, [language])
 
   useEffect(() => {
     if (adminSession.isRestoring) {
@@ -82,6 +95,12 @@ function App() {
     )
   }
 
+  const toggleLanguage = () => {
+    setLanguage((currentLanguage) =>
+      currentLanguage === 'en' ? 'km' : 'en',
+    )
+  }
+
   return (
     <div
       className="min-h-screen bg-[#000000] font-['Inter'] text-[#FFF8E7]"
@@ -91,7 +110,9 @@ function App() {
         adminTitle={adminTitles[adminSection]}
         currentView={currentView}
         isAuthenticated={adminSession.isAuthenticated}
+        language={language}
         onLogout={adminSession.logout}
+        onToggleLanguage={toggleLanguage}
         onOpenView={openView}
         onToggleTheme={toggleTheme}
         theme={theme}
@@ -124,17 +145,20 @@ function App() {
         <MyStorePage
           activeProducts={productsState.activeProducts}
           featuredProduct={productsState.featuredProduct}
+          language={language}
           onManageProducts={openProductManagement}
           onViewHome={() => openView('store')}
         />
       ) : currentView === 'card' ? (
         <CardPage
           featuredProduct={productsState.featuredProduct}
+          language={language}
           onViewHome={() => openView('store')}
         />
       ) : (
         <StorePage
           activeProducts={productsState.activeProducts}
+          language={language}
           onManageProducts={openProductManagement}
         />
       )}

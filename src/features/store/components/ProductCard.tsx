@@ -1,10 +1,24 @@
 import type { Product } from '../../products/types'
 
 type ProductCardProps = {
+  language: 'en' | 'km'
   product: Product
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+const productCardText = {
+  en: {
+    order: 'Order on Facebook',
+    sizes: 'Sizes',
+  },
+  km: {
+    order: 'បញ្ជាទិញតាម Facebook',
+    sizes: 'ទំហំ',
+  },
+}
+
+export function ProductCard({ language, product }: ProductCardProps) {
+  const text = productCardText[language]
+
   return (
     <article className="overflow-hidden rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] shadow-[0_24px_70px_rgba(0,0,0,0.45)] transition hover:-translate-y-1 hover:border-[#E4B45A]/70 sm:rounded-3xl">
       <div className="relative">
@@ -26,7 +40,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.name}
             </h3>
             <p className="mt-1 text-xs font-semibold text-[#B8A98A] sm:mt-2 sm:text-sm">
-              Sizes: {product.sizes}
+              {text.sizes}: {product.sizes}
             </p>
           </div>
           <p className="text-base font-black text-[#E4B45A] sm:text-lg">
@@ -39,7 +53,7 @@ export function ProductCard({ product }: ProductCardProps) {
           rel="noreferrer"
           className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-full bg-[#E4B45A] px-3 text-center text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] sm:mt-5 sm:min-h-11 sm:px-5 sm:text-sm sm:tracking-[0.12em]"
         >
-          Order on Facebook
+          {text.order}
         </a>
       </div>
     </article>

@@ -3,10 +3,15 @@ import type { Product } from '../products/types'
 
 type CardPageProps = {
   featuredProduct: Product
+  language: 'en' | 'km'
   onViewHome: () => void
 }
 
-export function CardPage({ featuredProduct, onViewHome }: CardPageProps) {
+export function CardPage({
+  featuredProduct,
+  language,
+  onViewHome,
+}: CardPageProps) {
   return (
     <>
       <main>
@@ -99,7 +104,7 @@ export function CardPage({ featuredProduct, onViewHome }: CardPageProps) {
         </section>
       </main>
 
-      <Footer />
+      <Footer language={language} />
     </>
   )
 }
