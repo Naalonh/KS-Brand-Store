@@ -82,7 +82,7 @@ export function AppHeader({
             target="_blank"
             rel="noreferrer"
             aria-label="Order on Messenger"
-            className="relative inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#E4B45A]/70 bg-[#E4B45A] text-[#000000] shadow-[0_0_30px_rgba(228,180,90,0.2)] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
           >
             <svg
               aria-hidden="true"
@@ -100,7 +100,7 @@ export function AppHeader({
             <span className="sr-only">Order on Messenger</span>
             <span
               aria-hidden="true"
-              className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-black leading-none text-white"
+              className="absolute right-1 top-1 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-black leading-none text-white"
             >
               1
             </span>
