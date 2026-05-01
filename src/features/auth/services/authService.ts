@@ -29,6 +29,17 @@ type SupabaseUser = {
 }
 
 const TOKEN_REFRESH_MARGIN_SECONDS = 60
+const WRONG_EMAIL_MESSAGE = 'Wrong email.'
+const RESET_RATE_LIMIT_MESSAGE =
+  'Too many reset emails. Please wait before sending another link.'
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase()
+
+const isUserNotFoundError = (message: string) =>
+  /not found|user.*not.*found|email.*not.*found|invalid email/i.test(message)
+
+const isRateLimitError = (message: string) =>
+  /rate limit|too many|429/i.test(message)
 
 const getSessionExpiresAt = (session: SupabasePasswordSession) =>
   session.expires_at ??
@@ -95,6 +106,63 @@ export async function signInAdmin(email: string, password: string) {
   const data = (await response.json()) as SupabasePasswordSession
 
   return mapSupabaseSession(data, email)
+}
+
+export async function requestAdminPasswordReset(email: string) {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase environment variables are missing.')
+  }
+
+  const normalizedEmail = normalizeEmail(email)
+
+  if (
+    adminAuthConfig.email &&
+    normalizedEmail !== normalizeEmail(adminAuthConfig.email)
+  ) {
+    throw new Error(WRONG_EMAIL_MESSAGE)
+  }
+
+  const response = await fetch(`${supabaseConfig.url}/auth/v1/recover`, {
+    method: 'POST',
+    headers: getSupabaseHeaders(),
+    body: JSON.stringify({
+      email: normalizedEmail,
+      redirect_to: `${window.location.origin}/admin/reset-password`,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorMessage = await getSupabaseAuthError(response)
+    if (isUserNotFoundError(errorMessage)) {
+      throw new Error(WRONG_EMAIL_MESSAGE)
+    }
+
+    if (response.status === 429 || isRateLimitError(errorMessage)) {
+      throw new Error(RESET_RATE_LIMIT_MESSAGE)
+    }
+
+    throw new Error(errorMessage)
+  }
+}
+
+export async function updateAdminPassword(
+  accessToken: string,
+  password: string,
+) {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase environment variables are missing.')
+  }
+
+  const response = await fetch(`${supabaseConfig.url}/auth/v1/user`, {
+    method: 'PUT',
+    headers: getSupabaseHeaders(accessToken),
+    body: JSON.stringify({ password }),
+  })
+
+  if (!response.ok) {
+    const errorMessage = await getSupabaseAuthError(response)
+    throw new Error(errorMessage)
+  }
 }
 
 export async function restoreAdminSession(session: AdminSession) {

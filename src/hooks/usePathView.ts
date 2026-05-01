@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type View = 'store' | 'admin' | 'adminLogin' | 'mystore' | 'cart'
+export type View =
+  | 'store'
+  | 'admin'
+  | 'adminLogin'
+  | 'adminResetPassword'
+  | 'mystore'
+  | 'cart'
 
 const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/'
 
@@ -11,6 +17,10 @@ const getViewPath = (view: View) => {
 
   if (view === 'adminLogin') {
     return '/admin/login'
+  }
+
+  if (view === 'adminResetPassword') {
+    return '/admin/reset-password'
   }
 
   if (view === 'mystore') {
@@ -29,6 +39,10 @@ const getCurrentViewFromPath = (pathname: string): View => {
 
   if (path === '/admin/login') {
     return 'adminLogin'
+  }
+
+  if (path === '/admin/reset-password') {
+    return 'adminResetPassword'
   }
 
   if (path === '/admin' || path.startsWith('/admin/')) {

@@ -7,6 +7,7 @@ import {
   type AdminSection,
 } from './features/admin/adminSections'
 import { LoginPage } from './features/auth/components/LoginPage'
+import { ResetPasswordPage } from './features/auth/components/ResetPasswordPage'
 import { useAdminSession } from './features/auth/hooks/useAdminSession'
 import { CartPage } from './features/cart/CartPage'
 import { useCategories } from './features/categories/hooks/useCategories'
@@ -57,7 +58,9 @@ function App() {
 
   const isAdminRoute = currentView === 'admin'
   const isAdminLoginRoute = currentView === 'adminLogin'
-  const isAdminAreaRoute = isAdminRoute || isAdminLoginRoute
+  const isAdminResetPasswordRoute = currentView === 'adminResetPassword'
+  const isAdminAreaRoute =
+    isAdminRoute || isAdminLoginRoute || isAdminResetPasswordRoute
   const canShowAdmin = isAdminRoute && adminSession.isAuthenticated
   const isRedirectingAuthenticatedLogin =
     isAdminLoginRoute && adminSession.isAuthenticated
@@ -173,6 +176,8 @@ function App() {
           productsState={productsState}
           sizesState={sizesState}
         />
+      ) : isAdminResetPasswordRoute ? (
+        <ResetPasswordPage onBackToLogin={() => openView('adminLogin')} />
       ) : isAdminAreaRoute ? (
         <LoginPage
           onLogin={handleAdminLogin}
