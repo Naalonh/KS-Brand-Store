@@ -31,17 +31,6 @@ export function AdminDashboardPanel({
             <h2 className="mt-2 text-3xl font-black text-[#FFF8E7]">
               Collection overview
             </h2>
-            <p className="mt-3 max-w-2xl text-[#B8A98A]">
-              Your live product source is{' '}
-              <span className="font-black text-[#FDD97D]">
-                {productsState.isLoading
-                  ? 'loading'
-                  : productsState.source === 'supabase'
-                    ? 'Supabase'
-                    : 'local fallback'}
-              </span>
-              .
-            </p>
             {productsState.error ? (
               <p className="mt-3 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] px-4 py-3 text-sm font-semibold text-[#FDD97D]">
                 {productsState.error}
