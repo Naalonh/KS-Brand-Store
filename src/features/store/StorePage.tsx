@@ -1,6 +1,5 @@
 import { Footer } from '../../shared/layout/Footer'
 import type { Product } from '../products/types'
-import { highlights } from './data/highlights'
 import { ProductCard } from './components/ProductCard'
 
 type StorePageProps = {
@@ -48,16 +47,6 @@ export function StorePage({
               </a>
             </div>
 
-            <div className="mt-10 grid gap-3 text-sm font-semibold text-[#B8A98A] sm:grid-cols-3">
-              {highlights.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-xl border border-[#9C7A42]/30 bg-[#130E0D] px-4 py-4"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="relative overflow-hidden rounded-3xl border border-[#9C7A42]/40 bg-[#130E0D] shadow-[0_30px_90px_rgba(0,0,0,0.75)]">
@@ -83,41 +72,6 @@ export function StorePage({
                   {featuredProduct.price}
                 </p>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="new" className="border-y border-[#9C7A42]/25 bg-[#130E0D]">
-          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 md:grid-cols-3 lg:px-8">
-            <div>
-              <p className="text-sm font-black text-[#E4B45A]">01</p>
-              <h2 className="mt-2 text-xl font-black text-[#FFF8E7]">
-                Curated materials
-              </h2>
-              <p className="mt-2 text-[#B8A98A]">
-                Rich textures, clean shapes, and refined finishes selected for
-                a premium wardrobe.
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-black text-[#E4B45A]">02</p>
-              <h2 className="mt-2 text-xl font-black text-[#FFF8E7]">
-                Modern silhouettes
-              </h2>
-              <p className="mt-2 text-[#B8A98A]">
-                Minimal profiles designed to pair with smart casual and street
-                fashion looks.
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-black text-[#E4B45A]">03</p>
-              <h2 className="mt-2 text-xl font-black text-[#FFF8E7]">
-                Direct concierge
-              </h2>
-              <p className="mt-2 text-[#B8A98A]">
-                Message us on Facebook with your preferred pair and size for a
-                quick order.
-              </p>
             </div>
           </div>
         </section>
