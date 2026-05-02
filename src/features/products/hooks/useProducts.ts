@@ -13,11 +13,17 @@ import {
   deleteProductImage,
   deleteProductImagesForProduct,
   getProductImageStoragePath,
+  uploadProductImageForProduct,
 } from '../services/productImagesRepository'
 import type { Product, ProductForm } from '../types'
 import { loadProducts, saveProducts } from '../utils/productStorage'
 
 export type ProductsState = ReturnType<typeof useProducts>
+
+const maxProductSizesLength = 512
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : ''
 
 export function useProducts(accessToken?: string) {
   const [products, setProducts] = useState<Product[]>(() =>
@@ -63,13 +69,16 @@ export function useProducts(accessToken?: string) {
 
         setProducts(remoteProducts)
         setSource('supabase')
-      } catch {
+      } catch (error) {
         if (!isMounted) {
           return
         }
 
+        const errorMessage = getErrorMessage(error)
         setError(
-          'Supabase products table is not ready yet, so local products are showing.',
+          errorMessage
+            ? `Supabase products table is not ready yet, so local products are showing. ${errorMessage}`
+            : 'Supabase products table is not ready yet, so local products are showing.',
         )
         setSource('local')
       } finally {
@@ -99,8 +108,28 @@ export function useProducts(accessToken?: string) {
     setDraftProductId(createProductId())
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+    imageBlob?: Blob,
+  ) => {
     event.preventDefault()
+
+    let imageUrl = form.image.trim()
+
+    // Upload the pending blob now (at submit time, not at crop time)
+    if (imageBlob && canUseSupabaseProducts && accessToken) {
+      setError('')
+      try {
+        imageUrl = await uploadProductImageForProduct(
+          imageBlob,
+          accessToken,
+          editingId ?? draftProductId,
+        )
+      } catch {
+        setError('Could not upload the product image. Please try again.')
+        return false
+      }
+    }
 
     const nextProduct: ProductForm = {
       name: form.name.trim(),
@@ -108,17 +137,40 @@ export function useProducts(accessToken?: string) {
       discountPrice: form.discountPrice?.trim() ?? '',
       sizes: form.sizes.trim(),
       tag: form.tag.trim(),
-      image: form.image.trim(),
+      image: imageUrl,
       active: form.active,
     }
 
     if (
       !nextProduct.name ||
       !nextProduct.price ||
-      !nextProduct.sizes ||
       !nextProduct.tag ||
       !nextProduct.image
     ) {
+      setError('Please fill in all product details before saving.')
+      return false
+    }
+
+    if (!nextProduct.sizes) {
+      setError('Please choose at least one product size before saving.')
+      return false
+    }
+
+    if (nextProduct.sizes.length > maxProductSizesLength) {
+      setError(
+        `Please choose fewer or shorter sizes. Product sizes can be at most ${maxProductSizesLength} characters.`,
+      )
+      return false
+    }
+
+    if (
+      canUseSupabaseProducts &&
+      !imageBlob &&
+      !nextProduct.image.startsWith('http')
+    ) {
+      setError(
+        'The product image must be uploaded to storage before saving. Please re-upload the image.',
+      )
       return false
     }
 
@@ -195,8 +247,13 @@ export function useProducts(accessToken?: string) {
 
       resetForm()
       return true
-    } catch {
-      setError('Could not save this product in Supabase.')
+    } catch (error) {
+      const errorMessage = getErrorMessage(error)
+      setError(
+        errorMessage
+          ? `Could not save this product in Supabase. ${errorMessage}`
+          : 'Could not save this product in Supabase.',
+      )
       return false
     }
   }
@@ -249,8 +306,13 @@ export function useProducts(accessToken?: string) {
           ),
         )
         return true
-      } catch {
-        setError('Could not update this product in Supabase.')
+      } catch (error) {
+        const errorMessage = getErrorMessage(error)
+        setError(
+          errorMessage
+            ? `Could not update this product in Supabase. ${errorMessage}`
+            : 'Could not update this product in Supabase.',
+        )
         return false
       }
     }
@@ -276,8 +338,13 @@ export function useProducts(accessToken?: string) {
     if (canUseSupabaseProducts && accessToken && uuidPattern.test(productId)) {
       try {
         await deleteRemoteProduct(productId, accessToken)
-      } catch {
-        setError('Could not delete this product in Supabase.')
+      } catch (error) {
+        const errorMessage = getErrorMessage(error)
+        setError(
+          errorMessage
+            ? `Could not delete this product in Supabase. ${errorMessage}`
+            : 'Could not delete this product in Supabase.',
+        )
         shouldRemoveProductLocally = false
       }
 

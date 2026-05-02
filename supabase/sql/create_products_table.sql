@@ -17,6 +17,13 @@ create table if not exists public.products (
   updated_at timestamptz not null default now()
 );
 
+alter table public.products
+drop constraint if exists products_sizes_check;
+
+alter table public.products
+add constraint products_sizes_check
+check (char_length(trim(sizes)) between 1 and 512);
+
 create index if not exists products_active_sort_order_idx
   on public.products (active, sort_order, created_at desc);
 
@@ -140,3 +147,5 @@ set
 -- update auth.users
 -- set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
 -- where email = 'admin@ksbrand.store';
+
+notify pgrst, 'reload schema';

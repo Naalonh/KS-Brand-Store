@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabaseConfig } from './supabaseConfig'
 
 const authConfig = {
+  autoRefreshToken: false,
+  detectSessionInUrl: false,
   persistSession: false,
 }
 
@@ -14,11 +16,6 @@ export const supabaseClient = isSupabaseConfigured
 export const createSupabaseClientWithToken = (accessToken: string) =>
   isSupabaseConfigured
     ? createClient(supabaseConfig.url, supabaseConfig.anonKey, {
-        auth: authConfig,
-        global: {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
+        accessToken: async () => accessToken,
       })
     : null

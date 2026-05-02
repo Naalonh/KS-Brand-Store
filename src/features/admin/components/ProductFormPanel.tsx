@@ -21,6 +21,14 @@ const getSelectedSizes = (sizes: string) =>
     .filter(Boolean)
 
 const maxSelectedSizes = 20
+const maxProductSizesLength = 512
+
+const formatSelectedSizes = (sizes: string[]) => sizes.join(', ')
+
+const canAddSize = (selectedSizes: string[], sizeName: string) =>
+  selectedSizes.length < maxSelectedSizes &&
+  formatSelectedSizes([...selectedSizes, sizeName]).length <=
+    maxProductSizesLength
 
 export function ProductFormPanel({
   categoriesState,
@@ -34,6 +42,7 @@ export function ProductFormPanel({
   )
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false)
   const [isSizePickerOpen, setIsSizePickerOpen] = useState(false)
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null)
   const { showToast } = useToast()
   const activeSizes = useMemo(
     () => sizesState.sizes.filter((size) => size.active),
@@ -56,10 +65,7 @@ export function ProductFormPanel({
     (activeCategories.length > 0 ? 'Choose a category' : 'No active categories')
 
   const toggleSize = (sizeName: string) => {
-    if (
-      !selectedSizes.includes(sizeName) &&
-      selectedSizes.length >= maxSelectedSizes
-    ) {
+    if (!selectedSizes.includes(sizeName) && !canAddSize(selectedSizes, sizeName)) {
       return
     }
 
@@ -67,12 +73,12 @@ export function ProductFormPanel({
       ? selectedSizes.filter((selectedSize) => selectedSize !== sizeName)
       : [...selectedSizes, sizeName]
 
-    productsState.updateForm('sizes', nextSizes.join(', '))
+    productsState.updateForm('sizes', formatSelectedSizes(nextSizes))
   }
 
   const handleSubmit: ProductsState['handleSubmit'] = async (event) => {
     const wasEditing = Boolean(productsState.editingId)
-    const didSubmit = await productsState.handleSubmit(event)
+    const didSubmit = await productsState.handleSubmit(event, imageBlob ?? undefined)
 
     if (didSubmit) {
       onSubmitted?.()
@@ -82,6 +88,7 @@ export function ProductFormPanel({
           : 'Product was added successfully.',
         tone: 'success',
       })
+      setImageBlob(null)
     }
 
     return didSubmit
@@ -113,7 +120,10 @@ export function ProductFormPanel({
         ) : productsState.editingId ? (
           <button
             type="button"
-            onClick={productsState.resetForm}
+            onClick={() => {
+              productsState.resetForm()
+              setImageBlob(null)
+            }}
             className="shrink-0 cursor-pointer rounded-[10px] border border-[#9C7A42]/70 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
           >
             Clear
@@ -265,6 +275,7 @@ export function ProductFormPanel({
         <ProductImagePicker
           accessToken={productsState.accessToken}
           imageUrl={productsState.form.image}
+          onBlobChange={setImageBlob}
           onChange={(value) => productsState.updateForm('image', value)}
           productId={productsState.imageProductId}
         />
@@ -291,13 +302,7 @@ export function ProductFormPanel({
         >
           {productsState.editingId ? 'Save Product' : 'Add Product'}
         </button>
-        <button
-          type="button"
-          onClick={productsState.restoreDefaults}
-          className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-6 text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
-        >
-          Restore
-        </button>
+
       </div>
 
       {isSizePickerOpen ? (
@@ -339,7 +344,7 @@ export function ProductFormPanel({
               {activeSizes.map((size) => {
                 const isSelected = selectedSizes.includes(size.name)
                 const isDisabled =
-                  !isSelected && selectedSizes.length >= maxSelectedSizes
+                  !isSelected && !canAddSize(selectedSizes, size.name)
 
                 return (
                   <button

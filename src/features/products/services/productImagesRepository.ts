@@ -49,14 +49,12 @@ export async function uploadProductImageForProduct(
     throw new Error('Supabase is not configured.')
   }
 
-  await storageClient.storage.from(PRODUCT_IMAGES_BUCKET).remove([path])
-
   const { error } = await storageClient.storage
     .from(PRODUCT_IMAGES_BUCKET)
     .upload(path, image, {
       cacheControl: '0',
       contentType: 'image/webp',
-      upsert: false,
+      upsert: true,
     })
 
   if (error) {

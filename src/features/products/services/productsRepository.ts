@@ -14,8 +14,14 @@ type ProductRow = {
 }
 
 const productSelect = 'id,name,price,discount_price,sizes,tag,image_url,active'
+const legacyProductSelect = 'id,name,price,sizes,tag,image_url,active'
 export const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+const isLegacyProductSchemaError = (error: unknown) =>
+  error instanceof Error &&
+  (error.message.includes('products.discount_price') ||
+    error.message.includes("Could not find the 'discount_price' column"))
 
 const mapProductRow = (row: ProductRow): Product => ({
   active: row.active,
@@ -38,6 +44,16 @@ const mapProductForm = (product: ProductForm) => ({
   tag: product.tag,
 })
 
+const mapLegacyProductForm = (product: ProductForm) => {
+  const payload: Omit<ReturnType<typeof mapProductForm>, 'discount_price'> &
+    Partial<Pick<ReturnType<typeof mapProductForm>, 'discount_price'>> =
+    mapProductForm(product)
+
+  delete payload.discount_price
+
+  return payload
+}
+
 const requireProductRow = (rows: ProductRow[], action: string) => {
   const row = rows[0]
 
@@ -51,12 +67,25 @@ const requireProductRow = (rows: ProductRow[], action: string) => {
 export const canUseSupabaseProducts = isSupabaseConfigured
 
 export async function fetchProducts(accessToken?: string) {
-  const rows = await supabaseFetch<ProductRow[]>(
-    `/rest/v1/products?select=${productSelect}&order=sort_order.asc,created_at.desc`,
-    { accessToken },
-  )
+  try {
+    const rows = await supabaseFetch<ProductRow[]>(
+      `/rest/v1/products?select=${productSelect}&order=sort_order.asc,created_at.desc`,
+      { accessToken },
+    )
 
-  return rows.map(mapProductRow)
+    return rows.map(mapProductRow)
+  } catch (error) {
+    if (!isLegacyProductSchemaError(error)) {
+      throw error
+    }
+
+    const rows = await supabaseFetch<ProductRow[]>(
+      `/rest/v1/products?select=${legacyProductSelect}&order=sort_order.asc,created_at.desc`,
+      { accessToken },
+    )
+
+    return rows.map(mapProductRow)
+  }
 }
 
 export async function createRemoteProduct(
@@ -64,17 +93,35 @@ export async function createRemoteProduct(
   accessToken: string,
   productId?: string,
 ) {
-  const rows = await supabaseFetch<ProductRow[]>('/rest/v1/products', {
-    accessToken,
-    body: {
-      ...mapProductForm(product),
-      ...(productId ? { id: productId } : {}),
-    },
-    method: 'POST',
-    prefer: 'return=representation',
-  })
+  try {
+    const rows = await supabaseFetch<ProductRow[]>('/rest/v1/products', {
+      accessToken,
+      body: {
+        ...mapProductForm(product),
+        ...(productId ? { id: productId } : {}),
+      },
+      method: 'POST',
+      prefer: 'return=representation',
+    })
 
-  return mapProductRow(requireProductRow(rows, 'create'))
+    return mapProductRow(requireProductRow(rows, 'create'))
+  } catch (error) {
+    if (!isLegacyProductSchemaError(error)) {
+      throw error
+    }
+
+    const rows = await supabaseFetch<ProductRow[]>('/rest/v1/products', {
+      accessToken,
+      body: {
+        ...mapLegacyProductForm(product),
+        ...(productId ? { id: productId } : {}),
+      },
+      method: 'POST',
+      prefer: 'return=representation',
+    })
+
+    return mapProductRow(requireProductRow(rows, 'create'))
+  }
 }
 
 export async function updateRemoteProduct(
@@ -82,17 +129,35 @@ export async function updateRemoteProduct(
   product: ProductForm,
   accessToken: string,
 ) {
-  const rows = await supabaseFetch<ProductRow[]>(
-    `/rest/v1/products?id=eq.${encodeURIComponent(productId)}&select=${productSelect}`,
-    {
-      accessToken,
-      body: mapProductForm(product),
-      method: 'PATCH',
-      prefer: 'return=representation',
-    },
-  )
+  try {
+    const rows = await supabaseFetch<ProductRow[]>(
+      `/rest/v1/products?id=eq.${encodeURIComponent(productId)}&select=${productSelect}`,
+      {
+        accessToken,
+        body: mapProductForm(product),
+        method: 'PATCH',
+        prefer: 'return=representation',
+      },
+    )
 
-  return mapProductRow(requireProductRow(rows, 'update'))
+    return mapProductRow(requireProductRow(rows, 'update'))
+  } catch (error) {
+    if (!isLegacyProductSchemaError(error)) {
+      throw error
+    }
+
+    const rows = await supabaseFetch<ProductRow[]>(
+      `/rest/v1/products?id=eq.${encodeURIComponent(productId)}&select=${legacyProductSelect}`,
+      {
+        accessToken,
+        body: mapLegacyProductForm(product),
+        method: 'PATCH',
+        prefer: 'return=representation',
+      },
+    )
+
+    return mapProductRow(requireProductRow(rows, 'update'))
+  }
 }
 
 export async function deleteRemoteProduct(productId: string, accessToken: string) {

@@ -580,7 +580,7 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
         </div>
       </section>
 
-      <section className="p-4 sm:p-6">
+      <section>
         {ordersState.error ? (
           <p className="mt-4 rounded-[10px] border border-red-500/40 bg-red-950/25 p-4 text-sm font-semibold text-red-200">
             {ordersState.error}
@@ -606,76 +606,137 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
         ) : null}
 
         {visibleOrders.length > 0 ? (
-          <div className="overflow-x-auto rounded-[10px] border border-[#9C7A42]/25 bg-[#000000]">
-            <table className="w-full min-w-[760px] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-[#9C7A42]/25 bg-[#130E0D] text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
-                  <th className="px-4 py-4">Id</th>
-                  <th className="px-4 py-4">Product Name</th>
-                  <th className="px-4 py-4">Size</th>
-                  <th className="px-4 py-4">Qty</th>
-                  <th className="px-4 py-4">Status</th>
-                  <th className="px-4 py-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleOrders.map((order) => {
-                  const isSelectedOrder =
-                    order.orderNumber === selectedOrderNumber ||
-                    order.id === selectedOrderId
-                  const productNames =
-                    order.items.map((item) => item.productName).join(', ') ||
-                    'No products'
-                  const sizes =
-                    order.items
-                      .map((item) => item.size || 'Confirm in chat')
-                      .join(', ') || 'Confirm in chat'
-                  const quantity = order.items.reduce(
-                    (total, item) => total + item.quantity,
-                    0,
-                  )
+          <>
+            {/* Mobile / tablet card list — hidden on md+ */}
+            <div className="grid gap-3 md:hidden">
+              {visibleOrders.map((order) => {
+                const isSelectedOrder =
+                  order.orderNumber === selectedOrderNumber ||
+                  order.id === selectedOrderId
+                const productNames =
+                  order.items.map((item) => item.productName).join(', ') ||
+                  'No products'
+                const sizes =
+                  order.items
+                    .map((item) => item.size || 'Confirm in chat')
+                    .join(', ') || 'Confirm in chat'
+                const quantity = order.items.reduce(
+                  (total, item) => total + item.quantity,
+                  0,
+                )
 
-                  return (
-                    <tr
-                      key={order.id}
-                      className={`border-b border-[#9C7A42]/15 last:border-b-0 ${
-                        isSelectedOrder ? 'bg-[#E4B45A]/10' : ''
-                      }`}
-                    >
-                      <td className="px-4 py-4 text-sm font-black text-[#FFF8E7]">
-                        {order.orderNumber}
-                      </td>
-                      <td className="px-4 py-4 text-sm font-semibold text-[#B8A98A]">
-                        {productNames}
-                      </td>
-                      <td className="px-4 py-4 text-sm font-semibold text-[#B8A98A]">
-                        {sizes}
-                      </td>
-                      <td className="px-4 py-4 text-sm font-black text-[#FFF8E7]">
-                        {quantity}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="rounded-[10px] border border-[#9C7A42]/40 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A]">
-                          {getOrderStatusLabel(order.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => setViewingOrderId(order.id)}
-                            className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#FDD97D] transition hover:border-[#FDD97D] hover:text-[#FFF8E7] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
-                          >
-                            View
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                return (
+                  <div
+                    key={order.id}
+                    className={`rounded-[10px] border bg-[#000000] p-4 ${
+                      isSelectedOrder
+                        ? 'border-[#E4B45A]/60 bg-[#E4B45A]/5'
+                        : 'border-[#9C7A42]/25'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-black text-[#FFF8E7]">
+                          {order.orderNumber}
+                        </p>
+                        <p className="mt-1 truncate text-sm font-semibold text-[#B8A98A]">
+                          {productNames}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-[8px] border border-[#9C7A42]/40 px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A]">
+                        {getOrderStatusLabel(order.status)}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div className="flex gap-4 text-xs font-semibold text-[#B8A98A]">
+                        <span>Size: {sizes}</span>
+                        <span>Qty: {quantity}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setViewingOrderId(order.id)}
+                        className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#FDD97D] transition hover:border-[#FDD97D] hover:text-[#FFF8E7] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                      >
+                        View
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Desktop table — hidden below md */}
+            <div className="hidden overflow-x-auto rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] md:block">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-[#9C7A42]/25 bg-[#130E0D] text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
+                    <th className="px-4 py-4">Id</th>
+                    <th className="px-4 py-4">Product Name</th>
+                    <th className="px-4 py-4">Size</th>
+                    <th className="px-4 py-4">Qty</th>
+                    <th className="px-4 py-4">Status</th>
+                    <th className="px-4 py-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleOrders.map((order) => {
+                    const isSelectedOrder =
+                      order.orderNumber === selectedOrderNumber ||
+                      order.id === selectedOrderId
+                    const productNames =
+                      order.items.map((item) => item.productName).join(', ') ||
+                      'No products'
+                    const sizes =
+                      order.items
+                        .map((item) => item.size || 'Confirm in chat')
+                        .join(', ') || 'Confirm in chat'
+                    const quantity = order.items.reduce(
+                      (total, item) => total + item.quantity,
+                      0,
+                    )
+
+                    return (
+                      <tr
+                        key={order.id}
+                        className={`border-b border-[#9C7A42]/15 last:border-b-0 ${
+                          isSelectedOrder ? 'bg-[#E4B45A]/10' : ''
+                        }`}
+                      >
+                        <td className="px-4 py-4 text-sm font-black text-[#FFF8E7]">
+                          {order.orderNumber}
+                        </td>
+                        <td className="px-4 py-4 text-sm font-semibold text-[#B8A98A]">
+                          {productNames}
+                        </td>
+                        <td className="px-4 py-4 text-sm font-semibold text-[#B8A98A]">
+                          {sizes}
+                        </td>
+                        <td className="px-4 py-4 text-sm font-black text-[#FFF8E7]">
+                          {quantity}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="rounded-[10px] border border-[#9C7A42]/40 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A]">
+                            {getOrderStatusLabel(order.status)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setViewingOrderId(order.id)}
+                              className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#FDD97D] transition hover:border-[#FDD97D] hover:text-[#FFF8E7] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                            >
+                              View
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : null}
       </section>
 
@@ -1143,7 +1204,7 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
                           className="min-h-11 rounded-[10px] border border-[#9C7A42]/45 bg-[#130E0D] px-3 text-sm font-semibold text-[#FFF8E7] outline-none transition placeholder:text-[#7D6E55] focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
                         />
                       </div>
-                      <div className="grid gap-3 sm:grid-cols-[1fr_8rem_8rem_3rem]">
+                      <div className="grid gap-3 md:grid-cols-[1fr_8rem_8rem_3rem]">
                         <input
                           value={item.size}
                           onChange={(event) =>

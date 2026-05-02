@@ -6,14 +6,13 @@ import {
   type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import {
-  canUploadProductImages,
-  uploadProductImageForProduct,
-} from '../../products/services/productImagesRepository'
+
+
 
 type ProductImagePickerProps = {
   accessToken?: string
   imageUrl: string
+  onBlobChange?: (blob: Blob | null) => void
   onChange: (imageUrl: string) => void
   productId: string
 }
@@ -52,16 +51,14 @@ const fileToDataUrl = (file: File) =>
   })
 
 export function ProductImagePicker({
-  accessToken,
   imageUrl,
+  onBlobChange,
   onChange,
-  productId,
 }: ProductImagePickerProps) {
   const captureInputRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [cropSource, setCropSource] = useState('')
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadError, setUploadError] = useState('')
+  const [cropError, setCropError] = useState('')
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -71,26 +68,19 @@ export function ProductImagePicker({
       return
     }
 
-    setUploadError('')
+    setCropError('')
     setCropSource(await fileToDataUrl(file))
   }
 
   const handleCrop = async (blob: Blob) => {
-    setIsUploading(true)
-    setUploadError('')
-
+    setCropError('')
     try {
-      const nextImageUrl =
-        canUploadProductImages && accessToken
-          ? await uploadProductImageForProduct(blob, accessToken, productId)
-          : await blobToDataUrl(blob)
-
-      onChange(nextImageUrl)
+      const previewUrl = await blobToDataUrl(blob)
+      onChange(previewUrl)
+      onBlobChange?.(blob)
       setCropSource('')
     } catch {
-      setUploadError('Could not upload this image. Please try another image.')
-    } finally {
-      setIsUploading(false)
+      setCropError('Could not process this image. Please try another image.')
     }
   }
 
@@ -125,19 +115,17 @@ export function ProductImagePicker({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-sm font-black uppercase tracking-[0.1em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-5 sm:tracking-[0.12em]"
+              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-sm font-black uppercase tracking-[0.1em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-5 sm:tracking-[0.12em]"
             >
               Upload Image
             </button>
             <button
               type="button"
               onClick={() => {
-                setUploadError('')
+                setCropError('')
                 captureInputRef.current?.click()
               }}
-              disabled={isUploading}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-sm font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-5 sm:tracking-[0.12em]"
+              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-sm font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000] sm:px-5 sm:tracking-[0.12em]"
             >
               Capture
             </button>
@@ -159,14 +147,9 @@ export function ProductImagePicker({
             className="hidden"
           />
 
-          {isUploading ? (
-            <p className="text-sm font-semibold text-[#E4B45A]">
-              Uploading image...
-            </p>
-          ) : null}
-          {uploadError ? (
+          {cropError ? (
             <p className="rounded-[10px] border border-[#9C7A42]/35 px-4 py-3 text-sm font-semibold text-[#FDD97D]">
-              {uploadError}
+              {cropError}
             </p>
           ) : null}
         </div>
@@ -175,7 +158,7 @@ export function ProductImagePicker({
       {cropSource ? (
         <ImageCropModal
           imageSource={cropSource}
-          isBusy={isUploading}
+          isBusy={false}
           onCancel={() => setCropSource('')}
           onCrop={handleCrop}
         />
