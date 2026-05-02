@@ -181,7 +181,7 @@ export function AdminSidebar({
 
   return (
     <aside
-      className={`rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-2 shadow-[0_24px_70px_rgba(0,0,0,0.35)] transition-[width] duration-300 ease-out sm:rounded-3xl sm:p-3 lg:fixed lg:bottom-0 lg:left-0 lg:top-20 lg:flex lg:flex-col lg:overflow-visible lg:rounded-none lg:border-y-0 lg:border-l-0 lg:p-4 ${sidebarWidthClass} ${sidebarLayerClass}`}
+      className={`hidden rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-2 shadow-[0_24px_70px_rgba(0,0,0,0.35)] transition-[width] duration-300 ease-out sm:block sm:rounded-3xl sm:p-3 lg:fixed lg:bottom-0 lg:left-0 lg:top-20 lg:flex lg:flex-col lg:overflow-visible lg:rounded-none lg:border-y-0 lg:border-l-0 lg:p-4 ${sidebarWidthClass} ${sidebarLayerClass}`}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >

@@ -318,11 +318,13 @@ function App() {
       data-theme={theme}
     >
       <AppHeader
+        activeAdminSection={adminSection}
         adminTitle={adminTitles[adminSection]}
         cartQuantity={cartQuantity}
         currentView={currentView}
         isAuthenticated={adminSession.isAuthenticated}
         language={language}
+        onAdminSectionChange={openAdminSection}
         onLogout={adminSession.logout}
         onToggleLanguage={toggleLanguage}
         onOpenView={openView}

@@ -196,7 +196,7 @@ export function ProductsPanel({
           </button>
         </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(14rem,1fr)_minmax(14rem,1fr)_12rem] xl:items-end">
+        <div className="mt-6 grid gap-3 md:grid-cols-[minmax(12rem,1fr)_minmax(12rem,1fr)_13rem] md:items-end">
           <label className="grid gap-2">
             <span className="text-sm font-normal uppercase tracking-[0.14em] text-[#B8A98A]">
               Search

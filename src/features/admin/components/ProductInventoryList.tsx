@@ -184,20 +184,20 @@ export function ProductInventoryList({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 md:hidden">
+          <div className="grid gap-3 md:hidden">
             {visibleProducts.map((product) => (
               <article
                 key={product.id}
-                className="grid min-w-0 overflow-hidden rounded-[10px] border border-[#9C7A42]/25 bg-[#000000]"
+                className="grid min-h-28 min-w-0 grid-cols-[7rem_minmax(0,1fr)_auto] overflow-hidden rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] min-[430px]:min-h-[8.5rem] min-[430px]:grid-cols-[8.5rem_minmax(0,1fr)_auto]"
               >
                 <img
                   src={product.image}
                   alt={`${product.name} product`}
-                  className="aspect-square w-full bg-[#07131D] object-contain"
+                  className="h-full w-full bg-[#07131D] object-cover"
                 />
-                <div className="grid min-w-0 content-start gap-3 p-3">
+                <div className="grid min-w-0 content-start gap-2 p-3 pr-2">
                   <div className="grid min-w-0 gap-1">
-                    <h3 className="min-w-0 truncate text-sm font-normal text-[#FFF8E7]">
+                    <h3 className="min-w-0 truncate text-base font-normal text-[#FFF8E7]">
                       {product.name}
                     </h3>
                     <p className="min-w-0 truncate text-xs font-normal text-[#B8A98A]">
@@ -205,7 +205,7 @@ export function ProductInventoryList({
                     </p>
                   </div>
 
-                  <div className="grid gap-2">
+                  <div className="grid gap-1.5">
                     <span className="min-w-0 truncate text-xs font-black text-[#E4B45A]">
                       <ProductPrice product={product} />
                     </span>
@@ -213,8 +213,10 @@ export function ProductInventoryList({
                       {product.active ? 'Active' : 'Hidden'}
                     </span>
                   </div>
-
+                </div>
+                <div className="p-2 pl-0 min-[430px]:p-3 min-[430px]:pl-0">
                   <ProductActions
+                    direction="column"
                     product={product}
                     onDelete={onDelete}
                     onEdit={onEdit}
@@ -499,6 +501,7 @@ function ProductDetailDialog({
 }
 
 type ProductActionsProps = {
+  direction?: 'row' | 'column'
   onDelete: (productId: string) => void | Promise<void>
   onEdit: (product: Product) => void
   onToggleStatus: (productId: string) => void | Promise<void>
@@ -506,19 +509,25 @@ type ProductActionsProps = {
 }
 
 function ProductActions({
+  direction = 'row',
   onDelete,
   onEdit,
   onToggleStatus,
   product,
 }: ProductActionsProps) {
   const statusActionLabel = product.active ? 'Hide product' : 'Show product'
+  const wrapperClass =
+    direction === 'column'
+      ? 'flex flex-col items-end gap-2'
+      : 'flex flex-wrap justify-end gap-2'
+  const buttonSizeClass = direction === 'column' ? 'h-9 w-9' : 'h-10 w-10'
 
   return (
-    <div className="flex flex-wrap justify-end gap-2">
+    <div className={wrapperClass}>
       <button
         type="button"
         onClick={() => onEdit(product)}
-        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+        className={`inline-flex ${buttonSizeClass} shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]`}
         aria-label="Edit product"
         title="Edit"
       >
@@ -527,7 +536,7 @@ function ProductActions({
       <button
         type="button"
         onClick={() => onToggleStatus(product.id)}
-        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+        className={`inline-flex ${buttonSizeClass} shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]`}
         aria-label={statusActionLabel}
         title={product.active ? 'Hide' : 'Show'}
       >
@@ -536,7 +545,7 @@ function ProductActions({
       <button
         type="button"
         onClick={() => onDelete(product.id)}
-        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+        className={`inline-flex ${buttonSizeClass} shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]`}
         aria-label="Delete product"
         title="Delete"
       >

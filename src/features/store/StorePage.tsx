@@ -164,7 +164,7 @@ export function StorePage({
             <button
               type="button"
               onClick={() => selectCategory('all')}
-              className={`relative inline-flex min-h-10 shrink-0 items-center justify-center px-1 text-xs font-black uppercase tracking-[0.12em] transition duration-200 after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:origin-left after:rounded-full after:transition-transform after:duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#FDD97D] ${
+              className={`relative inline-flex min-h-10 shrink-0 items-center justify-center px-1 text-xs font-black uppercase tracking-[0.12em] transition duration-200 after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:origin-left after:rounded-full after:transition-transform after:duration-300 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] ${
                 selectedCategorySlug === 'all'
                   ? 'text-[#E4B45A] after:scale-x-100 after:bg-[#E4B45A]'
                   : 'text-[#B8A98A] after:scale-x-0 after:bg-[#E4B45A] hover:text-[#FDD97D] hover:after:scale-x-100'
@@ -177,7 +177,7 @@ export function StorePage({
                 key={category.id}
                 type="button"
                 onClick={() => selectCategory(category.slug)}
-                className={`relative inline-flex min-h-10 shrink-0 items-center justify-center px-1 text-xs font-black uppercase tracking-[0.12em] transition duration-200 after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:origin-left after:rounded-full after:transition-transform after:duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#FDD97D] ${
+                className={`relative inline-flex min-h-10 shrink-0 items-center justify-center px-1 text-xs font-black uppercase tracking-[0.12em] transition duration-200 after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:origin-left after:rounded-full after:transition-transform after:duration-300 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] ${
                   selectedCategorySlug === category.slug
                     ? 'text-[#E4B45A] after:scale-x-100 after:bg-[#E4B45A]'
                     : 'text-[#B8A98A] after:scale-x-0 after:bg-[#E4B45A] hover:text-[#FDD97D] hover:after:scale-x-100'
@@ -189,17 +189,17 @@ export function StorePage({
           </div>
         </div>
 
-        <section className="mx-auto max-w-7xl px-4 pb-6 pt-0 sm:px-6 lg:px-8">
+        <section className="w-full px-0 pb-6 pt-0 xl:mx-auto xl:max-w-7xl xl:px-8">
           <img
             src={bannerImage}
             alt="KS Brand Store banner"
-            className="w-full object-cover"
+            className="block w-full object-cover"
           />
         </section>
 
         <section
           id="products"
-          className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8"
+          className="mx-auto max-w-7xl px-4 pb-14 pt-4 sm:px-6 sm:pb-16 sm:pt-5 lg:px-8"
         >
           {filteredProducts.length > 0 ? (
             <>
@@ -280,24 +280,24 @@ export function StorePage({
 
       {selectedProduct ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#000000]/75 p-4"
+          className="fixed inset-0 z-[100] flex items-stretch justify-stretch bg-[#000000]/75 p-0 sm:items-center sm:justify-center sm:p-4"
           onMouseDown={() => setSelectedProduct(null)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="store-product-details-title"
-            className="max-h-[calc(100vh-2rem)] w-full max-w-4xl overflow-y-auto rounded-[8px] border border-[#9C7A42]/45 bg-[#130E0D] shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
+            className="h-full max-h-screen w-full overflow-y-auto border border-[#9C7A42]/45 bg-[#130E0D] shadow-[0_24px_80px_rgba(0,0,0,0.65)] sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:max-w-4xl sm:rounded-[8px]"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#9C7A42]/30 px-5 py-4">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
+            <div className="hidden items-center justify-between border-b border-[#9C7A42]/30 px-5 py-4 sm:flex">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#E4B45A]">
                 Product Detail
               </p>
               <button
                 type="button"
                 onClick={() => setSelectedProduct(null)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#E4B45A]/50 bg-[#000000] text-lg font-black text-[#FDD97D] transition hover:bg-[#2A0F0A] focus:outline-none focus:ring-2 focus:ring-[#FDD97D]"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#E4B45A]/50 bg-[#000000] text-lg font-bold text-[#FDD97D] transition hover:bg-[#2A0F0A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D]"
                 aria-label="Close product detail"
               >
                 X
@@ -305,7 +305,27 @@ export function StorePage({
             </div>
 
             <div className="grid md:grid-cols-[minmax(0,0.95fr)_minmax(18rem,1.05fr)]">
-              <div className="bg-[#000000] p-[10px]">
+              <div className="relative bg-[#000000] p-0 sm:p-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setSelectedProduct(null)}
+                  className="absolute left-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-[8px] border border-[#E4B45A]/45 bg-[#000000]/70 text-[#FDD97D] backdrop-blur transition hover:bg-[#2A0F0A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] sm:hidden"
+                  aria-label="Back to products"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 12H5" />
+                    <path d="m12 19-7-7 7-7" />
+                  </svg>
+                </button>
                 <img
                   src={selectedProduct.image}
                   alt={`${selectedProduct.name} shoe`}
@@ -316,17 +336,17 @@ export function StorePage({
               <div className="flex flex-col p-5 md:border-l md:border-[#9C7A42]/30 md:p-6">
                 <h2
                   id="store-product-details-title"
-                  className="text-2xl font-black text-[#FFF8E7]"
+                  className="text-2xl font-bold text-[#FFF8E7]"
                 >
                   {selectedProduct.name}
                 </h2>
                 <div className="mt-4 flex items-baseline gap-3">
                   {selectedProduct.discountPrice?.trim() ? (
-                    <span className="text-base font-black text-[#B8A98A] line-through decoration-[#FDD97D]/70">
+                    <span className="text-base font-normal text-[#B8A98A] line-through decoration-[#FDD97D]/70">
                       {formatPrice(selectedProduct.price)}
                     </span>
                   ) : null}
-                  <span className="text-2xl font-black text-[#E4B45A]">
+                  <span className="text-2xl font-bold text-[#E4B45A]">
                     {formatPrice(
                       selectedProduct.discountPrice?.trim() || selectedProduct.price,
                     )}
@@ -334,10 +354,10 @@ export function StorePage({
                 </div>
                 {selectedProductSizes.length > 0 ? (
                   <div className="mt-4">
-                    <p className="text-sm font-black text-[#B8A98A]">
+                    <p className="text-sm font-normal text-[#B8A98A]">
                       Sizes
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-2 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
                       {selectedProductSizes.map((size) => {
                         const isSelected = selectedSize === size
 
@@ -346,7 +366,7 @@ export function StorePage({
                             key={size}
                             type="button"
                             onClick={() => setSelectedSize(size)}
-                            className={`min-h-9 rounded-[8px] border px-3 text-xs font-black transition focus:outline-none focus:ring-2 focus:ring-[#FDD97D] ${
+                            className={`min-h-9 min-w-0 truncate whitespace-nowrap rounded-[8px] border px-2 text-[0.7rem] font-bold transition focus:outline-none focus:ring-2 focus:ring-[#FDD97D] sm:px-3 sm:text-xs ${
                               isSelected
                                 ? 'border-[#E4B45A] bg-[#E4B45A] text-[#000000]'
                                 : 'border-[#9C7A42]/45 bg-[#000000] text-[#FFF8E7] hover:border-[#E4B45A] hover:text-[#FDD97D]'
@@ -359,11 +379,11 @@ export function StorePage({
                     </div>
                   </div>
                 ) : null}
-                <div className="mt-6 rounded-[8px] bg-[#000000] p-4 md:mt-auto">
-                  <p className="text-xs font-black text-[#B8A98A]">
+                <div className="sticky bottom-0 z-10 -mx-5 mt-6 bg-[#130E0D] p-5 md:static md:mx-0 md:mt-auto md:rounded-[8px] md:bg-[#000000] md:p-4">
+                  <p className="text-xs font-normal text-[#B8A98A]">
                     Quantity
                   </p>
-                  <div className="mt-2 grid gap-3 sm:grid-cols-[7.25rem_minmax(0,1fr)]">
+                  <div className="mt-2 grid grid-cols-[7.25rem_minmax(0,1fr)] gap-3">
                     <div className="flex min-h-10 overflow-hidden rounded-[8px] border border-[#9C7A42]/35 bg-[#130E0D]">
                       <button
                         type="button"
@@ -372,12 +392,12 @@ export function StorePage({
                             Math.max(currentQuantity - 1, 1),
                           )
                         }
-                        className="flex w-10 items-center justify-center text-lg font-black text-[#B8A98A] transition hover:bg-[#2A0F0A] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FDD97D]"
+                        className="flex w-10 items-center justify-center text-lg font-bold text-[#B8A98A] transition hover:bg-[#2A0F0A] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FDD97D]"
                         aria-label="Decrease quantity"
                       >
                         -
                       </button>
-                      <span className="flex min-w-0 flex-1 items-center justify-center border-x border-[#9C7A42]/25 text-base font-black text-[#FFF8E7]">
+                      <span className="flex min-w-0 flex-1 items-center justify-center border-x border-[#9C7A42]/25 text-base font-bold text-[#FFF8E7]">
                         {selectedQuantity}
                       </span>
                       <button
@@ -387,7 +407,7 @@ export function StorePage({
                             currentQuantity + 1,
                           )
                         }
-                        className="flex w-10 items-center justify-center text-lg font-black text-[#B8A98A] transition hover:bg-[#2A0F0A] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FDD97D]"
+                        className="flex w-10 items-center justify-center text-lg font-bold text-[#B8A98A] transition hover:bg-[#2A0F0A] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FDD97D]"
                         aria-label="Increase quantity"
                       >
                         +
@@ -396,7 +416,7 @@ export function StorePage({
                     <button
                       type="button"
                       onClick={addSelectedProductToCart}
-                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[8px] bg-[#E4B45A] px-5 text-sm font-black text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                      className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-[8px] bg-[#E4B45A] px-3 text-xs font-bold text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:gap-2 sm:px-5 sm:text-sm"
                     >
                       <svg
                         aria-hidden="true"
