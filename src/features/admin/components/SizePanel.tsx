@@ -2,10 +2,54 @@ import { useEffect, useRef, useState } from 'react'
 import type { SizesState } from '../../sizes/hooks/useSizes'
 import { useToast } from '../../../shared/toast/useToast'
 import { AdminInput } from './AdminInput'
+import { AdminSummaryCard, type AdminSummaryIcon } from './AdminSummaryCard'
 
 type SizePanelProps = {
   sizesState: SizesState
 }
+
+const getSizeSortParts = (name: string) => {
+  const match = name.trim().match(/^([a-zA-Z]+)\s*(\d+)/)
+
+  if (!match) {
+    return {
+      letter: name.trim().toLowerCase(),
+      number: Number.POSITIVE_INFINITY,
+    }
+  }
+
+  return {
+    letter: match[1].toLowerCase(),
+    number: Number(match[2]),
+  }
+}
+
+const compareSizeNames = (firstName: string, secondName: string) => {
+  const first = getSizeSortParts(firstName)
+  const second = getSizeSortParts(secondName)
+  const letterSort = first.letter.localeCompare(second.letter)
+
+  if (letterSort !== 0) {
+    return letterSort
+  }
+
+  if (first.number !== second.number) {
+    return first.number - second.number
+  }
+
+  return firstName.localeCompare(secondName, undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  })
+}
+
+const getSizeStatusBadgeClass = (isActive: boolean) =>
+  isActive
+    ? 'border-[#4ADE80]/45 bg-[#4ADE80]/10 text-[#15803D]'
+    : 'border-[#D46A5E]/45 bg-[#D46A5E]/10 text-[#B45B50]'
+
+const deleteButtonClass =
+  'inline-flex cursor-pointer items-center justify-center rounded-[10px] border border-[#D46A5E]/45 px-3 text-xs font-normal uppercase tracking-[0.1em] text-[#B45B50] transition hover:border-[#D46A5E]/75 hover:bg-[#D46A5E]/10 hover:text-[#8F342B] focus:outline-none focus:ring-2 focus:ring-[#D46A5E]/45 focus:ring-offset-2 focus:ring-offset-[#000000]'
 
 export function SizePanel({ sizesState }: SizePanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -72,43 +116,68 @@ export function SizePanel({ sizesState }: SizePanelProps) {
     }
   }
 
+  const totalSizes = sizesState.sizes.length
+  const activeSizes = sizesState.sizes.filter((size) => size.active).length
+  const disabledSizes = totalSizes - activeSizes
+  const sizeSummaryCards = [
+    {
+      icon: 'size',
+      label: 'Total sizes',
+      value: totalSizes,
+    },
+    {
+      icon: 'active',
+      label: 'Active',
+      value: activeSizes,
+    },
+    {
+      icon: 'hidden',
+      label: 'Disabled',
+      value: disabledSizes,
+    },
+  ] satisfies Array<{
+    icon: AdminSummaryIcon
+    label: string
+    value: number
+  }>
+  const sortedSizes = [...sizesState.sizes].sort((firstSize, secondSize) =>
+    compareSizeNames(firstSize.name, secondSize.name),
+  )
+
   return (
     <div className="grid gap-6">
-      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {sizeSummaryCards.map((card) => (
+          <AdminSummaryCard
+            key={card.label}
+            icon={card.icon}
+            label={card.label}
+            value={card.value}
+          />
+        ))}
+      </section>
+
+      <section className="p-4 sm:p-6">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-              Size Management
-            </p>
-            <h2 className="mt-2 text-2xl font-black text-[#FFF8E7] sm:text-3xl">
+            <h2 className="text-2xl font-normal text-[#FFF8E7] sm:text-3xl">
               Product sizes
             </h2>
           </div>
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] sm:w-auto sm:px-7 sm:tracking-[0.14em]"
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-normal uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] sm:w-auto sm:px-7 sm:tracking-[0.14em]"
           >
             Add New Size
           </button>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-              Sizes
-            </p>
-          </div>
-          <span className="text-sm font-semibold text-[#B8A98A]">
-            {sizesState.sizes.length} total
-          </span>
-        </div>
-
-        {sizesState.sizes.length > 0 ? (
-          <div className="mt-6 grid gap-3 md:hidden">
-            {sizesState.sizes.map((size) => {
+      <section>
+        {sortedSizes.length > 0 ? (
+          <div className="grid gap-3 md:hidden">
+            {sortedSizes.map((size) => {
               const statusLabel = size.active ? 'Active' : 'Disabled'
 
               return (
@@ -117,10 +186,12 @@ export function SizePanel({ sizesState }: SizePanelProps) {
                   className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="min-w-0 break-words text-lg font-black text-[#FFF8E7]">
+                    <h3 className="min-w-0 break-words text-lg font-normal text-[#FFF8E7]">
                       {size.name}
                     </h3>
-                    <span className="inline-flex min-h-8 shrink-0 items-center justify-center rounded-[10px] border border-[#9C7A42]/45 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A]">
+                    <span
+                      className={`inline-flex min-h-8 shrink-0 items-center justify-center rounded-[10px] border px-3 text-xs font-normal uppercase tracking-[0.1em] ${getSizeStatusBadgeClass(size.active)}`}
+                    >
                       {statusLabel}
                     </span>
                   </div>
@@ -131,14 +202,14 @@ export function SizePanel({ sizesState }: SizePanelProps) {
                       onClick={() =>
                         toggleSizeStatus(size.id, size.active)
                       }
-                      className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                      className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-3 text-xs font-normal uppercase tracking-[0.1em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
                     >
                       {size.active ? 'Disable' : 'Activate'}
                     </button>
                     <button
                       type="button"
                       onClick={() => deleteSize(size.id)}
-                      className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-3 text-xs font-black uppercase tracking-[0.1em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                      className={`${deleteButtonClass} min-h-10`}
                     >
                       Delete
                     </button>
@@ -148,22 +219,22 @@ export function SizePanel({ sizesState }: SizePanelProps) {
             })}
           </div>
         ) : (
-          <p className="mt-6 rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] px-4 py-8 text-center text-sm font-semibold text-[#B8A98A] md:hidden">
+          <p className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] px-4 py-8 text-center text-sm font-normal text-[#B8A98A] md:hidden">
             No sizes yet.
           </p>
         )}
 
-        <div className="mt-6 hidden overflow-x-auto rounded-lg border border-[#9C7A42]/25 bg-[#000000] md:block">
-          <table className="min-w-[620px] w-full border-collapse text-left">
+        <div className="hidden overflow-x-auto rounded-lg border border-[#9C7A42]/25 bg-[#000000] md:block">
+          <table className="min-w-155 w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-[#9C7A42]/25 text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
+              <tr className="border-b border-[#9C7A42]/25 bg-[#130E0D] text-xs font-normal uppercase tracking-[0.16em] text-[#B8A98A]">
                 <th className="px-4 py-4">Size name</th>
                 <th className="px-4 py-4">Status</th>
                 <th className="px-4 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {sizesState.sizes.map((size) => {
+              {sortedSizes.map((size) => {
                 const statusLabel = size.active ? 'Active' : 'Disabled'
 
                 return (
@@ -171,11 +242,13 @@ export function SizePanel({ sizesState }: SizePanelProps) {
                     key={size.id}
                     className="border-b border-[#9C7A42]/15 last:border-b-0"
                   >
-                    <td className="px-4 py-4 text-base font-black text-[#FFF8E7]">
+                    <td className="px-4 py-4 text-base font-normal text-[#FFF8E7]">
                       {size.name}
                     </td>
                     <td className="px-4 py-4">
-                      <span className="inline-flex min-h-8 items-center justify-center rounded-[10px] border border-[#9C7A42]/45 px-3 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A]">
+                      <span
+                        className={`inline-flex min-h-8 items-center justify-center rounded-[10px] border px-3 text-xs font-normal uppercase tracking-[0.12em] ${getSizeStatusBadgeClass(size.active)}`}
+                      >
                         {statusLabel}
                       </span>
                     </td>
@@ -186,14 +259,14 @@ export function SizePanel({ sizesState }: SizePanelProps) {
                           onClick={() =>
                             toggleSizeStatus(size.id, size.active)
                           }
-                          className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                          className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-normal uppercase tracking-[0.12em] text-[#E4B45A] transition hover:bg-[#E4B45A] hover:text-[#000000] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
                         >
                           {size.active ? 'Disable' : 'Activate'}
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteSize(size.id)}
-                          className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                          className={`${deleteButtonClass} min-h-9 px-4 tracking-[0.12em]`}
                         >
                           Delete
                         </button>
@@ -203,11 +276,11 @@ export function SizePanel({ sizesState }: SizePanelProps) {
                 )
               })}
 
-              {sizesState.sizes.length === 0 ? (
+              {sortedSizes.length === 0 ? (
                 <tr>
                   <td
                     colSpan={3}
-                    className="px-4 py-8 text-center text-sm font-semibold text-[#B8A98A]"
+                    className="px-4 py-8 text-center text-sm font-normal text-[#B8A98A]"
                   >
                     No sizes yet.
                   </td>
@@ -234,12 +307,12 @@ export function SizePanel({ sizesState }: SizePanelProps) {
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
+                <p className="text-sm font-normal uppercase tracking-[0.18em] text-[#E4B45A]">
                   New Size
                 </p>
                 <h3
                   id="size-modal-title"
-                  className="mt-2 text-xl font-black text-[#FFF8E7] sm:text-2xl"
+                  className="mt-2 text-xl font-normal text-[#FFF8E7] sm:text-2xl"
                 >
                   Size details
                 </h3>
@@ -248,7 +321,7 @@ export function SizePanel({ sizesState }: SizePanelProps) {
                 type="button"
                 onClick={closeModal}
                 aria-label="Close size popup"
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 text-xl font-black text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 text-xl font-normal text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
               >
                 x
               </button>
@@ -263,7 +336,7 @@ export function SizePanel({ sizesState }: SizePanelProps) {
               />
 
               <label className="flex items-center justify-between gap-4 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] px-4 py-3">
-                <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+                <span className="text-sm font-normal uppercase tracking-[0.14em] text-[#B8A98A]">
                   Active
                 </span>
                 <input
@@ -281,13 +354,13 @@ export function SizePanel({ sizesState }: SizePanelProps) {
               <button
                 type="button"
                 onClick={closeModal}
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-6 text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-6 text-sm font-normal uppercase tracking-[0.14em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-6 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-6 text-sm font-normal uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
               >
                 Add Size
               </button>

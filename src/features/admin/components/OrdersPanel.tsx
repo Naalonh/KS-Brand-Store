@@ -8,6 +8,7 @@ import {
 import type { CreateManualOrderItem } from '../../orders/services/ordersRepository'
 import type { Order, OrderShare, OrderStatus } from '../../orders/types'
 import { useToast } from '../../../shared/toast/useToast'
+import { AdminSummaryCard, type AdminSummaryIcon } from './AdminSummaryCard'
 
 type OrdersPanelProps = {
   accessToken: string
@@ -22,6 +23,9 @@ const orderStatuses: Array<{
   { label: 'Fulfilled', value: 'fulfilled' },
   { label: 'Cancelled', value: 'cancelled' },
 ]
+
+const getOrderStatusLabel = (value: OrderStatus) =>
+  orderStatuses.find((status) => status.value === value)?.label ?? value
 
 const formatOrderDate = (value: string) =>
   new Intl.DateTimeFormat('en', {
@@ -87,6 +91,8 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
   const [isCreatingShareOrder, setIsCreatingShareOrder] = useState(false)
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false)
   const [isCreatingOrder, setIsCreatingOrder] = useState(false)
+  const [viewingOrderId, setViewingOrderId] = useState('')
+  const [isOrderStatusOpen, setIsOrderStatusOpen] = useState(false)
   const [isLoadingManualShare, setIsLoadingManualShare] = useState(false)
   const [manualShareUrl, setManualShareUrl] = useState('')
   const [manualShareId, setManualShareId] = useState('')
@@ -117,6 +123,52 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
         return 0
       })
     : ordersState.orders
+  const viewingOrder =
+    ordersState.orders.find((order) => order.id === viewingOrderId) ?? null
+  const orderSummaryCards = [
+    {
+      icon: 'order',
+      label: 'Total Orders',
+      value: ordersState.orders.length,
+    },
+    {
+      icon: 'archive',
+      label: 'Pending',
+      value: ordersState.orders.filter((order) => order.status === 'pending')
+        .length,
+    },
+    {
+      icon: 'active',
+      label: 'Paid',
+      value: ordersState.orders.filter((order) => order.status === 'paid')
+        .length,
+    },
+    {
+      icon: 'product',
+      label: 'Fulfilled',
+      value: ordersState.orders.filter((order) => order.status === 'fulfilled')
+        .length,
+    },
+    {
+      icon: 'hidden',
+      label: 'Cancelled',
+      value: ordersState.orders.filter((order) => order.status === 'cancelled')
+        .length,
+    },
+    {
+      icon: 'revenue',
+      label: 'Revenue',
+      value: formatTotalPrice(
+        ordersState.orders
+          .filter((order) => order.status !== 'cancelled')
+          .reduce((total, order) => total + getPriceValue(order.totalPrice), 0),
+      ),
+    },
+  ] satisfies Array<{
+    icon: AdminSummaryIcon
+    label: string
+    value: number | string
+  }>
 
   const replaceShareUrlWithOrder = useCallback((orderId?: string) => {
     const nextParams = new URLSearchParams(window.location.search)
@@ -480,15 +532,32 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
     })
   }
 
+  const selectViewingOrderStatus = (status: OrderStatus) => {
+    if (!viewingOrder) {
+      return
+    }
+
+    setIsOrderStatusOpen(false)
+    void updateOrderStatus(viewingOrder.id, status)
+  }
+
   return (
     <div className="grid gap-6">
-      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        {orderSummaryCards.map((card) => (
+          <AdminSummaryCard
+            key={card.label}
+            icon={card.icon}
+            label={card.label}
+            value={card.value}
+          />
+        ))}
+      </section>
+
+      <section className="py-4 sm:py-6">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-              Order Management
-            </p>
-            <h2 className="mt-2 text-2xl font-black text-[#FFF8E7] sm:text-3xl">
+            <h2 className="text-2xl font-black text-[#FFF8E7] sm:text-3xl">
               Orders
             </h2>
           </div>
@@ -511,16 +580,7 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
-        <div className="flex items-end justify-between gap-3">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-            Incoming Orders
-          </p>
-          <span className="text-sm font-semibold text-[#B8A98A]">
-            {visibleOrders.length} total
-          </span>
-        </div>
-
+      <section className="p-4 sm:p-6">
         {ordersState.error ? (
           <p className="mt-4 rounded-[10px] border border-red-500/40 bg-red-950/25 p-4 text-sm font-semibold text-red-200">
             {ordersState.error}
@@ -546,108 +606,283 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
         ) : null}
 
         {visibleOrders.length > 0 ? (
-          <div className="mt-6 grid gap-4">
-            {visibleOrders.map((order) => {
-              const isSelectedOrder =
-                order.orderNumber === selectedOrderNumber ||
-                order.id === selectedOrderId
+          <div className="overflow-x-auto rounded-[10px] border border-[#9C7A42]/25 bg-[#000000]">
+            <table className="w-full min-w-[760px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-[#9C7A42]/25 bg-[#130E0D] text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
+                  <th className="px-4 py-4">Id</th>
+                  <th className="px-4 py-4">Product Name</th>
+                  <th className="px-4 py-4">Size</th>
+                  <th className="px-4 py-4">Qty</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleOrders.map((order) => {
+                  const isSelectedOrder =
+                    order.orderNumber === selectedOrderNumber ||
+                    order.id === selectedOrderId
+                  const productNames =
+                    order.items.map((item) => item.productName).join(', ') ||
+                    'No products'
+                  const sizes =
+                    order.items
+                      .map((item) => item.size || 'Confirm in chat')
+                      .join(', ') || 'Confirm in chat'
+                  const quantity = order.items.reduce(
+                    (total, item) => total + item.quantity,
+                    0,
+                  )
 
-              return (
-              <article
-                key={order.id}
-                className={`rounded-[10px] border bg-[#000000] p-4 ${
-                  isSelectedOrder
-                    ? 'border-[#E4B45A] shadow-[0_0_0_1px_rgba(228,180,90,0.35)]'
-                    : 'border-[#9C7A42]/30'
-                }`}
-              >
-                <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-xl font-black text-[#FFF8E7]">
+                  return (
+                    <tr
+                      key={order.id}
+                      className={`border-b border-[#9C7A42]/15 last:border-b-0 ${
+                        isSelectedOrder ? 'bg-[#E4B45A]/10' : ''
+                      }`}
+                    >
+                      <td className="px-4 py-4 text-sm font-black text-[#FFF8E7]">
                         {order.orderNumber}
-                      </h3>
-                      <span className="rounded-full border border-[#9C7A42]/50 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A]">
-                        {order.status}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs font-semibold text-[#B8A98A]">
-                      {formatOrderDate(order.createdAt)}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2 sm:grid-cols-[10rem_1fr_1fr]">
-                    <select
-                      value={order.status}
-                      onChange={(event) =>
-                        updateOrderStatus(
-                          order.id,
-                          event.target.value as OrderStatus,
-                        )
-                      }
-                      className="min-h-11 cursor-pointer rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] px-3 text-xs font-black uppercase tracking-[0.08em] text-[#B8A98A] outline-none transition focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
-                    >
-                      {orderStatuses.map((status) => (
-                        <option key={status.value} value={status.value}>
-                          {status.label}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => copyOrder(order)}
-                      className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
-                    >
-                      Copy Order
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteOrder(order.id)}
-                      className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-red-500/45 px-4 text-xs font-black uppercase tracking-[0.12em] text-red-200 transition hover:border-red-300 hover:text-red-100 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 focus:ring-offset-[#000000]"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid gap-3">
-                  {order.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="grid gap-3 rounded-[10px] border border-[#9C7A42]/20 bg-[#130E0D] p-3 sm:grid-cols-[5rem_1fr_auto]"
-                    >
-                      <img
-                        src={item.productImage}
-                        alt={item.productName}
-                        className="aspect-square w-20 rounded-[8px] object-cover"
-                      />
-                      <div>
-                        <p className="text-base font-black text-[#FFF8E7]">
-                          {item.productName}
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-[#B8A98A]">
-                          Size: {item.size || 'Confirm in chat'} · Qty:{' '}
-                          {item.quantity}
-                        </p>
-                      </div>
-                      <p className="text-right text-lg font-black text-[#E4B45A]">
-                        {item.totalPrice}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-4 flex justify-end border-t border-[#9C7A42]/25 pt-4">
-                  <p className="text-lg font-black text-[#E4B45A]">
-                    Total: {order.totalPrice}
-                  </p>
-                </div>
-              </article>
-              )
-            })}
+                      </td>
+                      <td className="px-4 py-4 text-sm font-semibold text-[#B8A98A]">
+                        {productNames}
+                      </td>
+                      <td className="px-4 py-4 text-sm font-semibold text-[#B8A98A]">
+                        {sizes}
+                      </td>
+                      <td className="px-4 py-4 text-sm font-black text-[#FFF8E7]">
+                        {quantity}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="rounded-[10px] border border-[#9C7A42]/40 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A]">
+                          {getOrderStatusLabel(order.status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setViewingOrderId(order.id)}
+                            className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[10px] border border-[#E4B45A]/60 px-4 text-xs font-black uppercase tracking-[0.12em] text-[#FDD97D] transition hover:border-[#FDD97D] hover:text-[#FFF8E7] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+                          >
+                            View
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         ) : null}
       </section>
+
+      {viewingOrder ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#000000]/75 p-4"
+          onMouseDown={() => {
+            setIsOrderStatusOpen(false)
+            setViewingOrderId('')
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-detail-title"
+            className="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-[10px] border border-[#9C7A42]/45 bg-[#130E0D] shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#9C7A42]/30 px-5 py-4">
+              <div>
+                <p
+                  id="order-detail-title"
+                  className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]"
+                >
+                  Order Detail
+                </p>
+                <p className="mt-1 text-xl font-black text-[#FFF8E7]">
+                  {viewingOrder.orderNumber}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOrderStatusOpen(false)
+                  setViewingOrderId('')
+                }}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#E4B45A]/50 bg-[#000000] text-lg font-black text-[#FDD97D] transition hover:bg-[#2A0F0A] focus:outline-none focus:ring-2 focus:ring-[#FDD97D]"
+                aria-label="Close order detail popup"
+              >
+                X
+              </button>
+            </div>
+
+            <div className="grid gap-5 p-5">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] p-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+                    Customer
+                  </p>
+                  <p className="mt-2 break-words text-sm font-black text-[#FFF8E7]">
+                    {viewingOrder.customerName || 'Not provided'}
+                  </p>
+                </div>
+                <div className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] p-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+                    Phone
+                  </p>
+                  <p className="mt-2 break-words text-sm font-black text-[#FFF8E7]">
+                    {viewingOrder.customerPhone || 'Not provided'}
+                  </p>
+                </div>
+                <div className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] p-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+                    Date
+                  </p>
+                  <p className="mt-2 break-words text-sm font-black text-[#FFF8E7]">
+                    {formatOrderDate(viewingOrder.createdAt)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] p-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+                  Address
+                </p>
+                <p className="mt-2 break-words text-sm font-semibold text-[#FFF8E7]">
+                  {viewingOrder.customerAddress || 'Not provided'}
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-[10rem_1fr_1fr]">
+                <div
+                  className="relative"
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                      setIsOrderStatusOpen(false)
+                    }
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setIsOrderStatusOpen((isOpen) => !isOpen)}
+                    className="inline-flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-left text-xs font-black uppercase tracking-[0.08em] text-[#FFF8E7] outline-none transition hover:border-[#FDD97D] focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
+                    aria-haspopup="listbox"
+                    aria-expanded={isOrderStatusOpen}
+                    aria-label="Order status"
+                  >
+                    <span className="min-w-0 truncate">
+                      {getOrderStatusLabel(viewingOrder.status)}
+                    </span>
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 16 16"
+                      className={`h-4 w-4 shrink-0 text-[#E4B45A] transition-transform ${
+                        isOrderStatusOpen ? '' : 'rotate-180'
+                      }`}
+                    >
+                      <path
+                        d="M4 10L8 6L12 10"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.25"
+                      />
+                    </svg>
+                  </button>
+                  {isOrderStatusOpen ? (
+                    <div
+                      role="listbox"
+                      className="absolute left-0 top-full z-20 mt-2 w-full overflow-hidden rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] shadow-[0_18px_45px_rgba(0,0,0,0.65)]"
+                    >
+                      {orderStatuses.map((status) => (
+                        <button
+                          key={status.value}
+                          type="button"
+                          role="option"
+                          aria-selected={viewingOrder.status === status.value}
+                          onClick={() => selectViewingOrderStatus(status.value)}
+                          className={`block min-h-11 w-full cursor-pointer px-4 text-left text-xs font-black uppercase tracking-[0.08em] transition ${
+                            viewingOrder.status === status.value
+                              ? 'bg-[#E4B45A] text-[#000000]'
+                              : 'text-[#B8A98A] hover:bg-[#130E0D] hover:text-[#FDD97D]'
+                          }`}
+                        >
+                          {status.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyOrder(viewingOrder)}
+                  className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+                >
+                  Copy Order
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await deleteOrder(viewingOrder.id)
+                    setViewingOrderId('')
+                  }}
+                  className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-red-500/45 px-4 text-xs font-black uppercase tracking-[0.12em] text-red-200 transition hover:border-red-300 hover:text-red-100 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+                >
+                  Delete
+                </button>
+              </div>
+
+              <div className="grid gap-3">
+                {viewingOrder.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid gap-3 rounded-[10px] border border-[#9C7A42]/20 bg-[#000000] p-3 sm:grid-cols-[5rem_1fr_auto]"
+                  >
+                    <img
+                      src={item.productImage}
+                      alt={item.productName}
+                      className="aspect-square w-20 rounded-[8px] object-cover"
+                    />
+                    <div>
+                      <p className="text-base font-black text-[#FFF8E7]">
+                        {item.productName}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-[#B8A98A]">
+                        Size: {item.size || 'Confirm in chat'} - Qty:{' '}
+                        {item.quantity}
+                      </p>
+                    </div>
+                    <p className="text-right text-lg font-black text-[#E4B45A]">
+                      {item.totalPrice}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {viewingOrder.note ? (
+                <div className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] p-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+                    Note
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm font-semibold text-[#FFF8E7]">
+                    {viewingOrder.note}
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="flex justify-end border-t border-[#9C7A42]/25 pt-4">
+                <p className="text-lg font-black text-[#E4B45A]">
+                  Total: {viewingOrder.totalPrice}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isShareOrderOpen && orderShare ? (
         <div
@@ -827,8 +1062,10 @@ export function OrdersPanel({ accessToken }: OrdersPanelProps) {
                   Phone
                   <input
                     value={manualCustomerPhone}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     onChange={(event) =>
-                      setManualCustomerPhone(event.target.value)
+                      setManualCustomerPhone(event.target.value.replace(/\D/g, ''))
                     }
                     className="min-h-11 rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] px-3 text-sm font-semibold normal-case tracking-normal text-[#FFF8E7] outline-none transition focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
                   />

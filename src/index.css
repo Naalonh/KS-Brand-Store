@@ -125,9 +125,10 @@ body:has([data-theme='light']) {
   border-color: rgba(156, 122, 66, 0.32) !important;
 }
 
+[data-theme='light'] [class*="shadow-[0_18px_45px"],
 [data-theme='light'] [class*="shadow-[0_24px_70px"],
 [data-theme='light'] [class*="shadow-[0_30px_90px"] {
-  box-shadow: 0 24px 70px rgba(91, 62, 23, 0.18) !important;
+  box-shadow: none !important;
 }
 
 [data-theme='light'] [class*="focus:ring-offset-[#000000]"],

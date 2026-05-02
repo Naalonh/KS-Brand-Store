@@ -71,7 +71,6 @@ function EnglishFlagIcon() {
 }
 
 export function AppHeader({
-  adminTitle = 'Dashboard',
   cartQuantity,
   currentView,
   isAuthenticated,
@@ -87,21 +86,81 @@ export function AppHeader({
 
   if (currentView === 'admin' || currentView === 'adminLogin') {
     return (
-      <header className="sticky top-0 z-20 border-b border-[#9C7A42]/25 bg-[#130E0D]/95 backdrop-blur">
-        <div className="flex w-full flex-col gap-2 px-3 py-2 sm:min-h-20 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-3 lg:pl-[18rem] lg:pr-8">
-          <p className="min-w-0 truncate text-xs font-black uppercase tracking-[0.12em] text-[#E4B45A] sm:text-base sm:tracking-[0.16em]">
-            {adminTitle}
-          </p>
-          <div
-            className={`grid gap-2 sm:flex sm:shrink-0 sm:items-center ${
-              isAuthenticated ? 'grid-cols-2' : 'grid-cols-1'
-            }`}
-          >
+      <header className="sticky top-0 z-40 border-b border-[#9C7A42]/25 bg-[#130E0D]/95 backdrop-blur">
+        <div className="flex w-full flex-col gap-3 px-3 py-2 sm:min-h-20 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-3 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onOpenView('store')}
+              className="flex min-w-0 shrink-0 items-center gap-2 text-left sm:gap-3"
+            >
+              <img
+                src="/logo.png"
+                alt="KS Brand Store logo"
+                className="h-11 w-11 shrink-0 rounded-full object-contain shadow-[0_0_30px_rgba(228,180,90,0.22)] sm:h-12 sm:w-12"
+              />
+              <span className="flex min-w-0 flex-col">
+                <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#FFF8E7] sm:text-sm sm:tracking-[0.22em]">
+                  KS Brand
+                </span>
+                <span className="text-[0.65rem] font-normal uppercase tracking-[0.24em] text-[#B8A98A] sm:text-xs sm:tracking-[0.3em]">
+                  Store
+                </span>
+              </span>
+            </button>
+          </div>
+          <div className="hidden gap-2 sm:flex sm:shrink-0 sm:items-center">
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              aria-label={
+                theme === 'dark'
+                  ? 'Switch to light mode'
+                  : 'Switch to dark mode'
+              }
+              className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#9C7A42]/70 bg-[#130E0D] text-[#E4B45A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
+            >
+              {theme === 'dark' ? (
+                <svg
+                  aria-hidden="true"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.1"
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2" />
+                  <path d="M12 20v2" />
+                  <path d="m4.9 4.9 1.4 1.4" />
+                  <path d="m17.7 17.7 1.4 1.4" />
+                  <path d="M2 12h2" />
+                  <path d="M20 12h2" />
+                  <path d="m6.3 17.7-1.4 1.4" />
+                  <path d="m19.1 4.9-1.4 1.4" />
+                </svg>
+              ) : (
+                <svg
+                  aria-hidden="true"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.1"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M20.5 14.2A8 8 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" />
+                </svg>
+              )}
+            </button>
             {isAuthenticated ? (
               <button
                 type="button"
                 onClick={onLogout}
-                className="inline-flex min-h-9 items-center justify-center rounded-[10px] border border-[#9C7A42]/70 bg-[#130E0D] px-3 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:min-h-11 sm:px-5 sm:text-sm sm:tracking-[0.12em]"
+                className="inline-flex min-h-10 items-center justify-center rounded-[10px] border border-[#9C7A42]/70 bg-[#130E0D] px-4 text-sm font-medium uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
               >
                 Logout
               </button>
@@ -109,7 +168,7 @@ export function AppHeader({
             <button
               type="button"
               onClick={() => onOpenView('store')}
-              className="inline-flex min-h-9 items-center justify-center rounded-[10px] border border-[#E4B45A]/70 bg-[#E4B45A] px-3 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#000000] shadow-[0_0_30px_rgba(228,180,90,0.2)] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000] sm:min-h-11 sm:px-5 sm:text-sm sm:tracking-[0.12em]"
+              className="inline-flex min-h-10 items-center justify-center rounded-[10px] border border-[#E4B45A]/70 bg-[#E4B45A] px-4 text-sm font-medium uppercase tracking-[0.12em] text-[#000000] shadow-[0_0_30px_rgba(228,180,90,0.2)] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#000000]"
             >
               Back to Site
             </button>

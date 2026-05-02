@@ -1,13 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CategoriesState } from '../../categories/hooks/useCategories'
 import { useToast } from '../../../shared/toast/useToast'
+import { AdminSummaryCard, type AdminSummaryIcon } from './AdminSummaryCard'
 
 type CategoriesPanelProps = {
   categoriesState: CategoriesState
 }
 
+type CategoryStatusFilter = 'all' | 'active' | 'draft'
+
+const categoryStatusFilterOptions: Array<{
+  label: string
+  value: CategoryStatusFilter
+}> = [
+  { label: 'All categories', value: 'all' },
+  { label: 'Active', value: 'active' },
+  { label: 'Draft', value: 'draft' },
+]
+
 export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<CategoryStatusFilter>('all')
   const lastErrorToastRef = useRef('')
   const { showToast } = useToast()
 
@@ -88,23 +103,161 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
       })
     }
   }
+  const activeCategories = categoriesState.categories.filter(
+    (category) => category.active,
+  ).length
+  const draftCategories = categoriesState.categories.length - activeCategories
+  const assignedProducts = categoriesState.categories.reduce(
+    (total, category) => total + category.productCount,
+    0,
+  )
+  const categorySummaryCards = [
+    {
+      icon: 'category',
+      label: 'Total categories',
+      value: categoriesState.categories.length,
+    },
+    {
+      icon: 'active',
+      label: 'Active',
+      value: activeCategories,
+    },
+    {
+      icon: 'archive',
+      label: 'Draft',
+      value: draftCategories,
+    },
+    {
+      icon: 'product',
+      label: 'Assigned products',
+      value: assignedProducts,
+    },
+  ] satisfies Array<{
+    icon: AdminSummaryIcon
+    label: string
+    value: number
+  }>
+  const statusFilterLabel =
+    categoryStatusFilterOptions.find((option) => option.value === statusFilter)
+      ?.label ?? 'All categories'
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase()
+  const filteredCategories = categoriesState.categories.filter((category) => {
+    const matchesSearch =
+      !normalizedSearchTerm ||
+      category.name.toLowerCase().includes(normalizedSearchTerm)
+
+    if (!matchesSearch) {
+      return false
+    }
+
+    if (statusFilter === 'active') {
+      return category.active
+    }
+
+    if (statusFilter === 'draft') {
+      return !category.active
+    }
+
+    return true
+  })
+
+  const selectStatusFilter = (nextStatusFilter: CategoryStatusFilter) => {
+    setStatusFilter(nextStatusFilter)
+    setIsStatusFilterOpen(false)
+  }
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
-        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-              Category Management
-            </p>
-            <h2 className="mt-2 text-2xl font-black text-[#FFF8E7] sm:text-3xl">
-              Store categories
-            </h2>
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {categorySummaryCards.map((card) => (
+          <AdminSummaryCard
+            key={card.label}
+            icon={card.icon}
+            label={card.label}
+            value={card.value}
+          />
+        ))}
+      </section>
+
+      <section className="py-4 sm:py-6">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(14rem,1fr)_minmax(14rem,1fr)_auto] xl:items-end">
+          <label className="grid gap-2">
+            <span className="text-sm font-normal uppercase tracking-[0.14em] text-[#B8A98A]">
+              Search
+            </span>
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search categories"
+              className="min-h-12 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-[#FFF8E7] outline-none transition placeholder:text-[#B8A98A]/55 focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
+            />
+          </label>
+          <div className="grid gap-2">
+            <span className="text-sm font-normal uppercase tracking-[0.14em] text-[#B8A98A]">
+              Filter Status
+            </span>
+            <div
+              className="relative"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  setIsStatusFilterOpen(false)
+                }
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsStatusFilterOpen((isOpen) => !isOpen)}
+                className="inline-flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-left text-[#FFF8E7] outline-none transition hover:border-[#FDD97D] focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
+                aria-haspopup="listbox"
+                aria-expanded={isStatusFilterOpen}
+              >
+                <span className="min-w-0 truncate">{statusFilterLabel}</span>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 16 16"
+                  className={`h-4 w-4 shrink-0 text-[#E4B45A] transition-transform ${
+                    isStatusFilterOpen ? '' : 'rotate-180'
+                  }`}
+                >
+                  <path
+                    d="M4 10L8 6L12 10"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.25"
+                  />
+                </svg>
+              </button>
+              {isStatusFilterOpen ? (
+                <div
+                  role="listbox"
+                  className="absolute left-0 top-full z-20 mt-2 w-full overflow-hidden rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] shadow-[0_18px_45px_rgba(0,0,0,0.65)]"
+                >
+                  {categoryStatusFilterOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="option"
+                      aria-selected={statusFilter === option.value}
+                      onClick={() => selectStatusFilter(option.value)}
+                      className={`block min-h-11 w-full cursor-pointer px-4 text-left text-sm font-black transition ${
+                        statusFilter === option.value
+                          ? 'bg-[#E4B45A] text-[#000000]'
+                          : 'text-[#B8A98A] hover:bg-[#130E0D] hover:text-[#FDD97D]'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </div>
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] sm:w-auto sm:px-7 sm:tracking-[0.14em]"
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-sm font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] md:w-auto md:px-7 md:tracking-[0.14em]"
           >
             Add New Category
           </button>
@@ -117,21 +270,10 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
         </p>
       ) : null}
 
-      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-              Categories
-            </p>
-          </div>
-          <span className="text-sm font-semibold text-[#B8A98A]">
-            {categoriesState.categories.length} total
-          </span>
-        </div>
-
-        {categoriesState.categories.length > 0 ? (
-          <div className="mt-6 grid gap-3 md:hidden">
-            {categoriesState.categories.map((category) => {
+      <section>
+        {filteredCategories.length > 0 ? (
+          <div className="grid gap-3 md:hidden">
+            {filteredCategories.map((category) => {
               const statusLabel = category.active ? 'Active' : 'Draft'
 
               return (
@@ -183,15 +325,15 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
             })}
           </div>
         ) : (
-          <p className="mt-6 rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] px-4 py-8 text-center text-sm font-semibold text-[#B8A98A] md:hidden">
-            No categories yet.
+          <p className="rounded-[10px] border border-[#9C7A42]/25 bg-[#000000] px-4 py-8 text-center text-sm font-semibold text-[#B8A98A] md:hidden">
+            No categories found.
           </p>
         )}
 
-        <div className="mt-6 hidden overflow-x-auto rounded-lg border border-[#9C7A42]/25 bg-[#000000] md:block">
+        <div className="hidden overflow-x-auto rounded-lg border border-[#9C7A42]/25 bg-[#000000] md:block">
           <table className="min-w-[680px] w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-[#9C7A42]/25 text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
+              <tr className="border-b border-[#9C7A42]/25 bg-[#130E0D] text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
                 <th className="px-4 py-4">Category</th>
                 <th className="px-4 py-4">Products</th>
                 <th className="px-4 py-4">Status</th>
@@ -199,7 +341,7 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {categoriesState.categories.map((category) => {
+              {filteredCategories.map((category) => {
                 const statusLabel = category.active ? 'Active' : 'Draft'
 
                 return (
@@ -249,13 +391,13 @@ export function CategoriesPanel({ categoriesState }: CategoriesPanelProps) {
                 )
               })}
 
-              {categoriesState.categories.length === 0 ? (
+              {filteredCategories.length === 0 ? (
                 <tr>
                   <td
                     colSpan={4}
                     className="px-4 py-8 text-center text-sm font-semibold text-[#B8A98A]"
                   >
-                    No categories yet.
+                    No categories found.
                   </td>
                 </tr>
               ) : null}

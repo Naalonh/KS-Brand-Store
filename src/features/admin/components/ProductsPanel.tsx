@@ -4,6 +4,7 @@ import type { ProductsState } from '../../products/hooks/useProducts'
 import type { SizesState } from '../../sizes/hooks/useSizes'
 import type { Product } from '../../products/types'
 import { useToast } from '../../../shared/toast/useToast'
+import { AdminSummaryCard, type AdminSummaryIcon } from './AdminSummaryCard'
 import { ProductFormPanel } from './ProductFormPanel'
 import { ProductInventoryList, type ProductViewMode } from './ProductInventoryList'
 
@@ -85,6 +86,39 @@ export function ProductsPanel({
       ),
     [categoryFilter, productsState.products, searchTerm],
   )
+  const activeProducts = productsState.products.filter(
+    (product) => product.active,
+  ).length
+  const hiddenProducts = productsState.products.length - activeProducts
+  const discountedProducts = productsState.products.filter((product) =>
+    product.discountPrice?.trim(),
+  ).length
+  const productSummaryCards = [
+    {
+      icon: 'product',
+      label: 'Total products',
+      value: productsState.products.length,
+    },
+    {
+      icon: 'active',
+      label: 'Active',
+      value: activeProducts,
+    },
+    {
+      icon: 'hidden',
+      label: 'Hidden',
+      value: hiddenProducts,
+    },
+    {
+      icon: 'revenue',
+      label: 'Discounted',
+      value: discountedProducts,
+    },
+  ] satisfies Array<{
+    icon: AdminSummaryIcon
+    label: string
+    value: number
+  }>
 
   const closeProductModal = () => {
     productsState.resetForm()
@@ -135,13 +169,21 @@ export function ProductsPanel({
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-6">
-        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {productSummaryCards.map((card) => (
+          <AdminSummaryCard
+            key={card.label}
+            icon={card.icon}
+            label={card.label}
+            value={card.value}
+          />
+        ))}
+      </section>
+
+      <section className="py-4 sm:py-6">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
-              Products
-            </p>
-            <h2 className="mt-2 text-2xl font-black text-[#FFF8E7] sm:text-3xl">
+            <h2 className="text-2xl font-normal text-[#FFF8E7] sm:text-3xl">
               Product inventory
             </h2>
           </div>
@@ -154,9 +196,9 @@ export function ProductsPanel({
           </button>
         </div>
 
-        <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_16rem_auto] lg:items-end">
+        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(14rem,1fr)_minmax(14rem,1fr)_12rem] xl:items-end">
           <label className="grid gap-2">
-            <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+            <span className="text-sm font-normal uppercase tracking-[0.14em] text-[#B8A98A]">
               Search
             </span>
             <input
@@ -168,7 +210,7 @@ export function ProductsPanel({
           </label>
 
           <div className="grid gap-2">
-            <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+            <span className="text-sm font-normal uppercase tracking-[0.14em] text-[#B8A98A]">
               Filter Category
             </span>
             <div
@@ -246,7 +288,7 @@ export function ProductsPanel({
           </div>
 
           <div className="grid gap-2">
-            <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+            <span className="text-sm font-normal uppercase tracking-[0.14em] text-[#B8A98A]">
               View
             </span>
             <div className="grid min-h-12 grid-cols-2 overflow-hidden rounded-[10px] border border-[#9C7A42]/35 bg-[#000000]">
@@ -255,7 +297,7 @@ export function ProductsPanel({
                   key={mode}
                   type="button"
                   onClick={() => setViewMode(mode)}
-                  className={`cursor-pointer px-5 text-xs font-black uppercase tracking-[0.12em] transition ${
+                  className={`cursor-pointer px-4 text-xs font-black uppercase tracking-[0.12em] transition ${
                     viewMode === mode
                       ? 'bg-[#E4B45A] text-[#000000]'
                       : 'text-[#B8A98A] hover:text-[#FDD97D]'
