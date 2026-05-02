@@ -13,6 +13,11 @@ button {
   font-family: 'Suwannaphum', serif;
 }
 
+.cart-selection-control:checked {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.35 11.45 2.75 7.86l1.42-1.42 2.18 2.18 5.48-5.47 1.42 1.41-6.9 6.89Z' fill='%23000000'/%3E%3C/svg%3E");
+  background-size: 0.72rem 0.72rem;
+}
+
 .ks-logo-spinner {
   animation: ks-logo-spin 900ms linear infinite;
   background:
@@ -106,6 +111,15 @@ body:has([data-theme='light']) {
 [data-theme='light'] select {
   background-color: #fffdf5 !important;
   color: #130e0d !important;
+}
+
+[data-theme='light'] input.cart-selection-control {
+  background-color: transparent !important;
+}
+
+[data-theme='light'] input.cart-selection-control:checked {
+  background-color: #e4b45a !important;
+  border-color: #e4b45a !important;
 }
 
 [data-theme='light'] input::placeholder,

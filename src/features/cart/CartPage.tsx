@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createOrderShare } from '../orders/services/ordersRepository'
 import { buildSharedOrderMessage } from '../orders/utils/sharedOrderLink'
 import { useToast } from '../../shared/toast/useToast'
@@ -56,12 +56,18 @@ export function CartPage({
   const [editingItemKey, setEditingItemKey] = useState('')
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [isPreparingShare, setIsPreparingShare] = useState(false)
+  const [selectedItemKeys, setSelectedItemKeys] = useState<string[]>([])
   const [sharedOrderUrl, setSharedOrderUrl] = useState('')
   const [sharedOrderSignature, setSharedOrderSignature] = useState('')
   const items = cartItems
+  const itemKeys = useMemo(() => items.map(getCartItemKey), [items])
+  const selectedItems = useMemo(
+    () => items.filter((item) => selectedItemKeys.includes(getCartItemKey(item))),
+    [items, selectedItemKeys],
+  )
   const cartSignature = useMemo(
     () =>
-      items
+      selectedItems
         .map((item) =>
           [
             item.productId,
@@ -73,7 +79,7 @@ export function CartPage({
           ].join('|'),
         )
         .join('::'),
-    [items],
+    [selectedItems],
   )
   const productSizesById = useMemo(
     () =>
@@ -85,17 +91,19 @@ export function CartPage({
       ),
     [products],
   )
-  const total = items.reduce(
+  const selectedTotal = selectedItems.reduce(
     (sum, item) => sum + getPriceValue(item.price) * item.quantity,
     0,
   )
-  const canShareOrder = items.length > 0 && !isPreparingShare
+  const canShareOrder = selectedItems.length > 0 && !isPreparingShare
+  const areAllItemsSelected =
+    itemKeys.length > 0 && itemKeys.every((itemKey) => selectedItemKeys.includes(itemKey))
   const sharedOrderMessage = useMemo(
     () =>
       sharedOrderUrl
-        ? buildSharedOrderMessage(items, sharedOrderUrl)
+        ? buildSharedOrderMessage(selectedItems, sharedOrderUrl)
         : '',
-    [items, sharedOrderUrl],
+    [selectedItems, sharedOrderUrl],
   )
   const editingItem = items.find(
     (item) => getCartItemKey(item) === editingItemKey,
@@ -107,6 +115,34 @@ export function CartPage({
     editingItem && !editingItemSizes.includes(editingItem.size)
       ? [editingItem.size, ...editingItemSizes].filter(Boolean)
       : editingItemSizes
+
+  useEffect(() => {
+    setSelectedItemKeys((currentSelectedItemKeys) => {
+      const currentItemKeys = new Set(itemKeys)
+      const retainedSelectedItemKeys = currentSelectedItemKeys.filter((itemKey) =>
+        currentItemKeys.has(itemKey),
+      )
+      const addedItemKeys = itemKeys.filter(
+        (itemKey) => !currentSelectedItemKeys.includes(itemKey),
+      )
+
+      return [...retainedSelectedItemKeys, ...addedItemKeys]
+    })
+  }, [itemKeys])
+
+  const toggleItemSelection = (itemKey: string) => {
+    setSelectedItemKeys((currentSelectedItemKeys) =>
+      currentSelectedItemKeys.includes(itemKey)
+        ? currentSelectedItemKeys.filter(
+            (currentItemKey) => currentItemKey !== itemKey,
+          )
+        : [...currentSelectedItemKeys, itemKey],
+    )
+  }
+
+  const toggleAllItems = () => {
+    setSelectedItemKeys(areAllItemsSelected ? [] : itemKeys)
+  }
 
   const updateEditingItemSize = (nextSize: string) => {
     if (!editingItem || nextSize === editingItem.size) {
@@ -120,58 +156,35 @@ export function CartPage({
   const getShareLink = (shareId: string) =>
     `${window.location.origin}/orders?shareId=${encodeURIComponent(shareId)}`
 
-  const openShareDialog = async () => {
-    if (items.length === 0 || isPreparingShare) {
-      return
+  const prepareOrderShare = async () => {
+    if (selectedItems.length === 0 || isPreparingShare) {
+      return null
     }
 
     if (sharedOrderUrl && sharedOrderSignature === cartSignature) {
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            text: sharedOrderMessage,
-            title: 'KS Brand Store Order',
-            url: sharedOrderUrl,
-          })
-          return
-        } catch {
-          setIsShareDialogOpen(true)
-          return
-        }
+      return {
+        message: sharedOrderMessage,
+        url: sharedOrderUrl,
       }
-
-      setIsShareDialogOpen(true)
-      return
     }
 
     setIsPreparingShare(true)
 
     try {
-      const orderShare = await createOrderShare(items)
+      const orderShare = await createOrderShare(selectedItems)
       const nextSharedOrderUrl = getShareLink(orderShare.id)
       const nextSharedOrderMessage = buildSharedOrderMessage(
-        items,
+        selectedItems,
         nextSharedOrderUrl,
       )
 
       setSharedOrderUrl(nextSharedOrderUrl)
       setSharedOrderSignature(cartSignature)
 
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            text: nextSharedOrderMessage,
-            title: 'KS Brand Store Order',
-            url: nextSharedOrderUrl,
-          })
-          return
-        } catch {
-          setIsShareDialogOpen(true)
-          return
-        }
+      return {
+        message: nextSharedOrderMessage,
+        url: nextSharedOrderUrl,
       }
-
-      setIsShareDialogOpen(true)
     } catch (caughtError) {
       showToast({
         message:
@@ -180,15 +193,61 @@ export function CartPage({
             : 'Could not prepare order link.',
         tone: 'error',
       })
+      return null
     } finally {
       setIsPreparingShare(false)
+    }
+  }
+
+  const openShareDialog = async () => {
+    const preparedOrder = await prepareOrderShare()
+
+    if (!preparedOrder) {
+      return
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          text: preparedOrder.message,
+          title: 'KS Brand Store Order',
+          url: preparedOrder.url,
+        })
+        return
+      } catch {
+        setIsShareDialogOpen(true)
+        return
+      }
+    }
+
+    setIsShareDialogOpen(true)
+  }
+
+  const copyOrder = async () => {
+    const preparedOrder = await prepareOrderShare()
+
+    if (!preparedOrder) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(preparedOrder.message)
+      showToast({
+        message: 'Order copied.',
+        tone: 'success',
+      })
+    } catch {
+      showToast({
+        message: 'Could not copy order.',
+        tone: 'error',
+      })
     }
   }
 
   return (
     <>
       <main>
-        <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-14 pt-[15px] sm:px-6 sm:py-16 lg:grid-cols-2 lg:items-start lg:px-8 lg:py-20">
+        <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-44 pt-[15px] sm:px-6 sm:py-16 lg:grid-cols-2 lg:items-start lg:px-8 lg:py-20">
           <div>
             <div className="grid gap-4">
               {items.length > 0 ? (
@@ -198,12 +257,21 @@ export function CartPage({
                   return (
                     <article
                       key={itemKey}
-                      className="grid grid-cols-[6.75rem_minmax(0,1fr)] overflow-hidden rounded-[10px] border border-[#9C7A42]/40 bg-[#130E0D] shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:grid-cols-[10rem_1fr]"
+                      className="grid grid-cols-[2.5rem_6.75rem_minmax(0,1fr)] overflow-hidden rounded-[10px] border border-[#9C7A42]/40 bg-[#130E0D] shadow-[0_24px_70px_rgba(0,0,0,0.45)] sm:grid-cols-[2.75rem_10rem_1fr]"
                     >
+                      <label className="flex h-full items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedItemKeys.includes(itemKey)}
+                          onChange={() => toggleItemSelection(itemKey)}
+                          className="cart-selection-control h-4 w-4 appearance-none rounded-full border-2 border-[#9C7A42] bg-transparent bg-center bg-no-repeat checked:border-[#E4B45A] checked:bg-[#E4B45A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D]"
+                          aria-label={`Select ${item.name}`}
+                        />
+                      </label>
                       <img
                         src={item.image}
                         alt={`${item.name} selected shoe`}
-                        className="h-full min-h-28 w-full bg-[#000000] object-cover sm:min-h-40"
+                        className="my-1 h-[calc(100%-8px)] min-h-[calc(7rem-8px)] w-full rounded-[2px] bg-[#000000] object-cover sm:min-h-[calc(10rem-8px)]"
                       />
                       <div className="grid min-w-0 gap-3 p-4 sm:gap-4 sm:p-5">
                         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
@@ -259,7 +327,7 @@ export function CartPage({
             </div>
           </div>
 
-          <aside className="rounded-3xl border border-[#9C7A42]/40 bg-[#130E0D] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
+          <aside className="hidden rounded-3xl border border-[#9C7A42]/40 bg-[#130E0D] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.45)] sm:block">
             <p className="text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
               Cart Summary
             </p>
@@ -268,24 +336,33 @@ export function CartPage({
               <div className="flex items-center justify-between gap-4 border-b border-[#9C7A42]/30 pb-4">
                 <span>Items</span>
                 <span className="text-right text-[#FFF8E7]">
-                  {items.length}
+                  {selectedItems.length}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-[#9C7A42]/30 pb-4">
                 <span>Quantity</span>
                 <span className="text-[#FFF8E7]">
-                  {items.reduce((sum, item) => sum + item.quantity, 0)}
+                  {selectedItems.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 text-base">
                 <span>Total</span>
                 <span className="text-xl font-black text-[#E4B45A]">
-                  {formatTotalPrice(total)}
+                  {formatTotalPrice(selectedTotal)}
                 </span>
               </div>
             </div>
 
             <div className="mt-8">
+              <label className="mb-3 inline-flex min-h-11 w-full items-center justify-between rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A]">
+                <span>All</span>
+                <input
+                  type="radio"
+                  checked={areAllItemsSelected}
+                  onChange={toggleAllItems}
+                  className="cart-selection-control h-4 w-4 appearance-none rounded-full border-2 border-[#9C7A42] bg-transparent bg-center bg-no-repeat checked:border-[#E4B45A] checked:bg-[#E4B45A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D]"
+                />
+              </label>
               <button
                 type="button"
                 onClick={openShareDialog}
@@ -314,6 +391,49 @@ export function CartPage({
           </aside>
         </section>
       </main>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#9C7A42]/30 bg-[#130E0D]/95 px-4 py-3 backdrop-blur sm:hidden">
+        <div className="mx-auto grid max-w-7xl gap-3">
+          <div className="flex justify-end border-b border-[#9C7A42]/25 pb-3 text-sm font-bold text-[#B8A98A]">
+            <span>
+              Total :{' '}
+              <span className="text-base text-[#E4B45A]">
+                {formatTotalPrice(selectedTotal)}
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <label className="inline-flex min-h-11 shrink-0 items-center gap-3 rounded-[10px] border border-[#9C7A42]/35 bg-[#000000] px-3 text-xs font-bold uppercase tracking-[0.1em] text-[#B8A98A]">
+              <input
+                type="checkbox"
+                checked={areAllItemsSelected}
+                onChange={toggleAllItems}
+                className="cart-selection-control h-4 w-4 appearance-none rounded-full border-2 border-[#9C7A42] bg-transparent bg-center bg-no-repeat checked:border-[#E4B45A] checked:bg-[#E4B45A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D]"
+              />
+              All
+            </label>
+            <div className="flex min-h-11 min-w-0 flex-1 overflow-hidden rounded-[10px] border border-[#E4B45A]/55 bg-[#E4B45A] text-xs font-black uppercase tracking-[0.1em] text-[#000000]">
+              <button
+                type="button"
+                onClick={openShareDialog}
+                disabled={!canShareOrder}
+                className="min-w-0 flex-1 px-3 transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#000000] disabled:cursor-not-allowed disabled:opacity-55"
+              >
+                {isPreparingShare ? 'Preparing' : 'Share'}
+              </button>
+              <span className="my-2 w-px bg-[#000000]/35" aria-hidden="true" />
+              <button
+                type="button"
+                onClick={copyOrder}
+                disabled={!canShareOrder}
+                className="min-w-0 flex-1 px-3 transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#000000] disabled:cursor-not-allowed disabled:opacity-55"
+              >
+                Copy Order
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {editingItem ? (
         <div
