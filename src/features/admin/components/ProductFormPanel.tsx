@@ -20,7 +20,7 @@ const getSelectedSizes = (sizes: string) =>
     .map((size) => size.trim())
     .filter(Boolean)
 
-const maxSelectedSizes = 5
+const maxSelectedSizes = 20
 
 export function ProductFormPanel({
   categoriesState,

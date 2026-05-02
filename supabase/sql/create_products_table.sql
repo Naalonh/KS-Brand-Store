@@ -8,7 +8,7 @@ create table if not exists public.products (
     discount_price is null
     or char_length(trim(discount_price)) between 1 and 40
   ),
-  sizes text not null check (char_length(trim(sizes)) between 1 and 120),
+  sizes text not null check (char_length(trim(sizes)) between 1 and 512),
   tag text not null check (char_length(trim(tag)) between 1 and 80),
   image_url text not null check (image_url ~* '^https?://'),
   active boolean not null default true,
