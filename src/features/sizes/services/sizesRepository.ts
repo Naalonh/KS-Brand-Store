@@ -22,6 +22,11 @@ const isLegacySizeSchemaError = (error: unknown) =>
   (error.message.includes('sizes.name') ||
     error.message.includes("Could not find the 'name' column"))
 
+const isModernSizeSchemaError = (error: unknown) =>
+  error instanceof Error &&
+  (error.message.includes('sizes.size_label') ||
+    error.message.includes("Could not find the 'size_label' column"))
+
 const mapSizeRow = (row: SizeRow): Size => ({
   active: row.active,
   id: row.id,
@@ -67,41 +72,28 @@ export const canUseSupabaseSizes = isSupabaseConfigured
 
 export async function fetchSizes(accessToken?: string) {
   try {
-    const rows = await supabaseFetch<SizeRow[]>(
-      `/rest/v1/sizes?select=${sizeSelect}&order=sort_order.asc,created_at.desc`,
-      { accessToken },
-    )
-
-    return rows.map(mapSizeRow)
-  } catch (error) {
-    if (!isLegacySizeSchemaError(error)) {
-      throw error
-    }
-
     const rows = await supabaseFetch<LegacySizeRow[]>(
       `/rest/v1/sizes?select=${legacySizeSelect}&order=sort_order.asc,created_at.desc`,
       { accessToken },
     )
 
     return uniqueSizesByName(rows.map(mapLegacySizeRow))
+  } catch (error) {
+    if (!isModernSizeSchemaError(error)) {
+      throw error
+    }
+
+    const rows = await supabaseFetch<SizeRow[]>(
+      `/rest/v1/sizes?select=${sizeSelect}&order=sort_order.asc,created_at.desc`,
+      { accessToken },
+    )
+
+    return rows.map(mapSizeRow)
   }
 }
 
 export async function createRemoteSize(size: Size, accessToken: string) {
   try {
-    const rows = await supabaseFetch<SizeRow[]>('/rest/v1/sizes', {
-      accessToken,
-      body: mapSizePayload(size),
-      method: 'POST',
-      prefer: 'return=representation',
-    })
-
-    return mapSizeRow(rows[0])
-  } catch (error) {
-    if (!isLegacySizeSchemaError(error)) {
-      throw error
-    }
-
     const rows = await supabaseFetch<LegacySizeRow[]>('/rest/v1/sizes', {
       accessToken,
       body: mapLegacySizePayload(size),
@@ -110,6 +102,19 @@ export async function createRemoteSize(size: Size, accessToken: string) {
     })
 
     return mapLegacySizeRow(rows[0])
+  } catch (error) {
+    if (!isModernSizeSchemaError(error)) {
+      throw error
+    }
+
+    const rows = await supabaseFetch<SizeRow[]>('/rest/v1/sizes', {
+      accessToken,
+      body: mapSizePayload(size),
+      method: 'POST',
+      prefer: 'return=representation',
+    })
+
+    return mapSizeRow(rows[0])
   }
 }
 
@@ -119,24 +124,8 @@ export async function updateRemoteSize(
   accessToken: string,
 ) {
   try {
-    const rows = await supabaseFetch<SizeRow[]>(
-      `/rest/v1/sizes?id=eq.${encodeURIComponent(sizeId)}&select=${sizeSelect}`,
-      {
-        accessToken,
-        body: mapSizePayload(size),
-        method: 'PATCH',
-        prefer: 'return=representation',
-      },
-    )
-
-    return mapSizeRow(rows[0])
-  } catch (error) {
-    if (!isLegacySizeSchemaError(error)) {
-      throw error
-    }
-
     const rows = await supabaseFetch<LegacySizeRow[]>(
-      `/rest/v1/sizes?size_label=eq.${encodeURIComponent(size.name)}&select=${legacySizeSelect}`,
+      `/rest/v1/sizes?id=eq.${encodeURIComponent(sizeId)}&select=${legacySizeSelect}`,
       {
         accessToken,
         body: {
@@ -149,6 +138,22 @@ export async function updateRemoteSize(
     )
 
     return mapLegacySizeRow(rows[0])
+  } catch (error) {
+    if (!isModernSizeSchemaError(error)) {
+      throw error
+    }
+
+    const rows = await supabaseFetch<SizeRow[]>(
+      `/rest/v1/sizes?id=eq.${encodeURIComponent(sizeId)}&select=${sizeSelect}`,
+      {
+        accessToken,
+        body: mapSizePayload(size),
+        method: 'PATCH',
+        prefer: 'return=representation',
+      },
+    )
+
+    return mapSizeRow(rows[0])
   }
 }
 

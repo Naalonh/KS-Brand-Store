@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Footer } from '../../shared/layout/Footer'
+import type { Category } from '../categories/types'
 import type { Product } from '../products/types'
 import { ProductCard } from './components/ProductCard'
 import bannerImage from '../../../banner.png'
 
 type StorePageProps = {
   activeProducts: Product[]
+  categories: Category[]
   language: 'en' | 'km'
   onAddToCart: (product: Product, quantity: number, size: string) => void
   onManageProducts: () => void
@@ -85,27 +87,52 @@ const getPageNumbers = (currentPage: number, totalPages: number) => {
 
 export function StorePage({
   activeProducts,
+  categories,
   language,
   onAddToCart,
 }: StorePageProps) {
   const text = storeText[language]
+  const activeCategories = categories.filter((category) => category.active)
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState('all')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedQuantity, setSelectedQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState('')
+  const filteredProducts =
+    selectedCategorySlug === 'all'
+      ? activeProducts
+      : activeProducts.filter((product) => {
+          const category = activeCategories.find(
+            (currentCategory) => currentCategory.slug === selectedCategorySlug,
+          )
+          const categoryName = category?.name.toLowerCase() ?? ''
+          const categorySlug = category?.slug.toLowerCase() ?? ''
+          const productText = `${product.name} ${product.tag}`.toLowerCase()
+
+          return (
+            Boolean(categoryName && productText.includes(categoryName)) ||
+            Boolean(categorySlug && productText.includes(categorySlug))
+          )
+        })
   const totalPages = Math.max(
-    Math.ceil(activeProducts.length / productsPerPage),
+    Math.ceil(filteredProducts.length / productsPerPage),
     1,
   )
   const safeCurrentPage = Math.min(currentPage, totalPages)
   const pageStartIndex = (safeCurrentPage - 1) * productsPerPage
   const pageEndIndex = Math.min(
     pageStartIndex + productsPerPage,
-    activeProducts.length,
+    filteredProducts.length,
   )
   const pageNumbers = getPageNumbers(safeCurrentPage, totalPages)
-  const visibleProducts = activeProducts.slice(pageStartIndex, pageEndIndex)
-  const showingStart = activeProducts.length > 0 ? pageStartIndex + 1 : 0
+  const visibleProducts = filteredProducts.slice(pageStartIndex, pageEndIndex)
+  const showingStart = filteredProducts.length > 0 ? pageStartIndex + 1 : 0
+
+  const selectCategory = (categorySlug: string) => {
+    setSelectedCategorySlug(categorySlug)
+    setCurrentPage(1)
+    window.location.hash = 'products'
+  }
 
   const openProductDetails = (product: Product) => {
     const productSizes = getProductSizes(product.sizes)
@@ -132,6 +159,36 @@ export function StorePage({
   return (
     <>
       <main>
+        <div className="sticky top-20 z-10 border-b border-[#9C7A42]/25 bg-[#000000]/95 backdrop-blur">
+          <div className="mx-auto flex max-w-7xl gap-6 overflow-x-auto px-4 py-3 sm:px-6 lg:px-8">
+            <button
+              type="button"
+              onClick={() => selectCategory('all')}
+              className={`relative inline-flex min-h-10 shrink-0 items-center justify-center px-1 text-xs font-black uppercase tracking-[0.12em] transition duration-200 after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:origin-left after:rounded-full after:transition-transform after:duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#FDD97D] ${
+                selectedCategorySlug === 'all'
+                  ? 'text-[#E4B45A] after:scale-x-100 after:bg-[#E4B45A]'
+                  : 'text-[#B8A98A] after:scale-x-0 after:bg-[#E4B45A] hover:text-[#FDD97D] hover:after:scale-x-100'
+              }`}
+            >
+              All
+            </button>
+            {activeCategories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => selectCategory(category.slug)}
+                className={`relative inline-flex min-h-10 shrink-0 items-center justify-center px-1 text-xs font-black uppercase tracking-[0.12em] transition duration-200 after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:origin-left after:rounded-full after:transition-transform after:duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#FDD97D] ${
+                  selectedCategorySlug === category.slug
+                    ? 'text-[#E4B45A] after:scale-x-100 after:bg-[#E4B45A]'
+                    : 'text-[#B8A98A] after:scale-x-0 after:bg-[#E4B45A] hover:text-[#FDD97D] hover:after:scale-x-100'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <section className="mx-auto max-w-7xl px-4 pb-6 pt-0 sm:px-6 lg:px-8">
           <img
             src={bannerImage}
@@ -144,7 +201,7 @@ export function StorePage({
           id="products"
           className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8"
         >
-          {activeProducts.length > 0 ? (
+          {filteredProducts.length > 0 ? (
             <>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:gap-6">
                 {visibleProducts.map((product) => (
@@ -156,11 +213,11 @@ export function StorePage({
                   />
                 ))}
               </div>
-              {activeProducts.length > productsPerPage ? (
+              {filteredProducts.length > productsPerPage ? (
                 <div className="mt-8 flex flex-col items-stretch justify-between gap-3 border-t border-[#9C7A42]/25 pt-5 sm:flex-row sm:items-center">
                   <p className="text-sm font-semibold text-[#B8A98A]">
                     Showing {showingStart} to {pageEndIndex} of{' '}
-                    {activeProducts.length}
+                    {filteredProducts.length}
                   </p>
                   <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:flex sm:items-center">
                     <button

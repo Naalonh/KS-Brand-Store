@@ -20,12 +20,14 @@ import { loadProducts, saveProducts } from '../utils/productStorage'
 export type ProductsState = ReturnType<typeof useProducts>
 
 export function useProducts(accessToken?: string) {
-  const [products, setProducts] = useState<Product[]>(loadProducts)
+  const [products, setProducts] = useState<Product[]>(() =>
+    canUseSupabaseProducts ? [] : loadProducts(),
+  )
   const [form, setForm] = useState<ProductForm>(emptyProductForm)
   const [draftProductId, setDraftProductId] = useState(createProductId)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(canUseSupabaseProducts)
   const [source, setSource] = useState<'local' | 'supabase'>('local')
 
   const activeProducts = useMemo(

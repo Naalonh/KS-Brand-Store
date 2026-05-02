@@ -124,14 +124,18 @@ export function AppHeader({
       <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <BrandMark onClick={() => onOpenView('store')} />
 
-        <nav className="hidden items-center gap-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#B8A98A] md:flex">
-          <a href="#products" className="transition hover:text-[#FDD97D]">
-            {labels.collection}
-          </a>
-          <a href="#about-us" className="transition hover:text-[#FDD97D]">
-            {labels.about}
-          </a>
-        </nav>
+        {currentView === 'cart' || currentView === 'mystore' ? (
+          <div className="hidden md:block" />
+        ) : (
+          <nav className="hidden items-center gap-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#B8A98A] md:flex">
+            <a href="#products" className="transition hover:text-[#FDD97D]">
+              {labels.collection}
+            </a>
+            <a href="#about-us" className="transition hover:text-[#FDD97D]">
+              {labels.about}
+            </a>
+          </nav>
+        )}
 
         <div className="flex shrink-0 items-center gap-2">
           {isAuthenticated ? (

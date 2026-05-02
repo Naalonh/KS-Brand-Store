@@ -41,12 +41,14 @@ const adminSectionPaths: Record<AdminSection, string> = {
   size: '/admin/size',
 }
 
-const adminSectionsByPath = new Map(
-  Object.entries(adminSectionPaths).map(([section, path]) => [
-    path,
-    section as AdminSection,
-  ]),
-)
+const adminSectionEntries: Array<[string, AdminSection]> = [
+  ...Object.entries(adminSectionPaths).map(
+    ([section, path]) => [path, section as AdminSection] as [string, AdminSection],
+  ),
+  ['/orders', 'orders'],
+]
+
+const adminSectionsByPath = new Map<string, AdminSection>(adminSectionEntries)
 
 const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/'
 

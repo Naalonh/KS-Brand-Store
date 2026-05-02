@@ -38,6 +38,7 @@ type Language = 'en' | 'km'
 
 const THEME_KEY = 'ks-brand-store-theme'
 const LANGUAGE_KEY = 'ks-brand-store-language'
+const PENDING_ADMIN_PATH_KEY = 'ks-brand-store-pending-admin-path'
 
 const getSavedTheme = (): Theme => {
   const savedTheme = window.localStorage.getItem(THEME_KEY)
@@ -49,6 +50,26 @@ const getSavedLanguage = (): Language => {
   const savedLanguage = window.localStorage.getItem(LANGUAGE_KEY)
 
   return savedLanguage === 'km' ? 'km' : 'en'
+}
+
+function StoreLoadingPage() {
+  return (
+    <main className="grid min-h-[calc(100vh-5rem)] place-items-center px-4 py-16">
+      <section className="grid justify-items-center">
+        <div className="relative grid h-24 w-24 place-items-center">
+          <div className="ks-logo-spinner absolute inset-0 rounded-full" />
+          <img
+            src="/logo.png"
+            alt="KS Brand Store logo"
+            className="relative z-10 h-16 w-16 rounded-full object-contain shadow-[0_0_30px_rgba(228,180,90,0.22)]"
+          />
+        </div>
+        <p className="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
+          Loading...
+        </p>
+      </section>
+    </main>
+  )
 }
 
 function App() {
@@ -72,6 +93,9 @@ function App() {
   const canShowAdmin = isAdminRoute && adminSession.isAuthenticated
   const isRedirectingAuthenticatedLogin =
     isAdminLoginRoute && adminSession.isAuthenticated
+  const isStoreDataLoading =
+    currentView === 'store' &&
+    (productsState.isLoading || categoriesState.isLoading)
 
   useEffect(() => {
     window.localStorage.setItem(THEME_KEY, theme)
@@ -108,10 +132,34 @@ function App() {
     }
 
     if (isAdminRoute && !adminSession.isAuthenticated) {
+      window.sessionStorage.setItem(
+        PENDING_ADMIN_PATH_KEY,
+        `${window.location.pathname}${window.location.search}`,
+      )
       openView('adminLogin', { replace: true })
     }
 
     if (isAdminLoginRoute && adminSession.isAuthenticated) {
+      const pendingAdminPath = window.sessionStorage.getItem(
+        PENDING_ADMIN_PATH_KEY,
+      )
+
+      if (pendingAdminPath) {
+        const pendingAdminUrl = new URL(
+          pendingAdminPath,
+          window.location.origin,
+        )
+
+        window.sessionStorage.removeItem(PENDING_ADMIN_PATH_KEY)
+        openPath(pendingAdminUrl.pathname, { replace: true })
+        window.history.replaceState(
+          null,
+          '',
+          `${pendingAdminUrl.pathname}${pendingAdminUrl.search}`,
+        )
+        return
+      }
+
       openAdminSection(adminSection, { replace: true })
     }
   }, [
@@ -121,6 +169,7 @@ function App() {
     isAdminLoginRoute,
     isAdminRoute,
     openAdminSection,
+    openPath,
     openView,
   ])
 
@@ -181,6 +230,82 @@ function App() {
     setCartItems([])
     saveCartItems([])
   }
+
+  const updateCartItemQuantity = (
+    productId: string,
+    size: string,
+    quantity: number,
+  ) => {
+    setCartItems((currentItems) => {
+      const nextItems = currentItems.map((item) =>
+        item.productId === productId && item.size === size
+          ? { ...item, quantity: Math.max(quantity, 1) }
+          : item,
+      )
+
+      saveCartItems(nextItems)
+      return nextItems
+    })
+  }
+
+  const updateCartItemSize = (
+    productId: string,
+    currentSize: string,
+    nextSize: string,
+  ) => {
+    const normalizedNextSize = nextSize.trim()
+
+    if (!normalizedNextSize || normalizedNextSize === currentSize) {
+      return
+    }
+
+    setCartItems((currentItems) => {
+      const currentItem = currentItems.find(
+        (item) => item.productId === productId && item.size === currentSize,
+      )
+
+      if (!currentItem) {
+        return currentItems
+      }
+
+      const hasMatchingSize = currentItems.some(
+        (item) =>
+          item.productId === productId && item.size === normalizedNextSize,
+      )
+      const nextItems = hasMatchingSize
+        ? currentItems
+            .filter(
+              (item) =>
+                item.productId !== productId || item.size !== currentSize,
+            )
+            .map((item) =>
+              item.productId === productId &&
+              item.size === normalizedNextSize
+                ? { ...item, quantity: item.quantity + currentItem.quantity }
+                : item,
+            )
+        : currentItems.map((item) =>
+            item.productId === productId && item.size === currentSize
+              ? { ...item, size: normalizedNextSize }
+              : item,
+          )
+
+      saveCartItems(nextItems)
+      return nextItems
+    })
+  }
+
+  const removeCartItem = (productId: string, size: string) => {
+    setCartItems((currentItems) => {
+      const nextItems = currentItems.filter(
+        (item) => item.productId !== productId || item.size !== size,
+      )
+
+      saveCartItems(nextItems)
+      return nextItems
+    })
+  }
+
   const cartQuantity = cartItems.reduce(
     (sum, item) => sum + item.quantity,
     0,
@@ -205,7 +330,9 @@ function App() {
         theme={theme}
       />
 
-      {isAdminAreaRoute &&
+      {isStoreDataLoading ? (
+        <StoreLoadingPage />
+      ) : isAdminAreaRoute &&
       (adminSession.isRestoring || isRedirectingAuthenticatedLogin) ? (
         <main className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl place-items-center px-4 py-12 sm:px-6 lg:px-8">
           <section className="w-full max-w-md rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-6 text-center shadow-[0_30px_90px_rgba(0,0,0,0.65)] sm:p-8">
@@ -219,6 +346,7 @@ function App() {
         </main>
       ) : canShowAdmin ? (
         <AdminPage
+          accessToken={adminSession.accessToken ?? ''}
           activeSection={adminSection}
           categoriesState={categoriesState}
           onSectionChange={openAdminSection}
@@ -248,12 +376,17 @@ function App() {
         <CartPage
           cartItems={cartItems}
           onClearCart={clearCart}
+          onRemoveItem={removeCartItem}
+          onUpdateItemSize={updateCartItemSize}
+          onUpdateItemQuantity={updateCartItemQuantity}
+          products={productsState.products}
           language={language}
           onViewHome={() => openView('store')}
         />
       ) : (
         <StorePage
           activeProducts={productsState.activeProducts}
+          categories={categoriesState.categories}
           language={language}
           onAddToCart={addProductToCart}
           onManageProducts={openProductManagement}

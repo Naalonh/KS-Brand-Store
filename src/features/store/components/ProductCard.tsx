@@ -49,7 +49,7 @@ const formatPrice = (price: string) => {
 export function ProductCard({ language, onSelect, product }: ProductCardProps) {
   const text = productCardText[language]
   const discountPrice = product.discountPrice?.trim()
-  const badgeLabel = getDiscountLabel(product.price, discountPrice) || product.tag
+  const badgeLabel = getDiscountLabel(product.price, discountPrice)
   const openProductDetails = () => onSelect(product)
 
   return (
@@ -73,9 +73,11 @@ export function ProductCard({ language, onSelect, product }: ProductCardProps) {
           loading="lazy"
         />
         <div className="absolute inset-0 bg-[#000000]/20"></div>
-        <div className="absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded-full border border-[#E4B45A]/50 bg-[#000000]/70 px-2 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-[#FDD97D] backdrop-blur sm:left-4 sm:top-4 sm:px-3 sm:text-xs sm:tracking-[0.16em]">
-          {badgeLabel}
-        </div>
+        {badgeLabel ? (
+          <div className="absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded-full border border-[#E4B45A]/50 bg-[#000000]/70 px-2 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-[#FDD97D] backdrop-blur sm:left-4 sm:top-4 sm:px-3 sm:text-xs sm:tracking-[0.16em]">
+            {badgeLabel}
+          </div>
+        ) : null}
       </div>
       <div className="p-2.5 sm:p-5">
         <h3 className="truncate text-sm font-black text-[#FFF8E7] sm:text-xl">

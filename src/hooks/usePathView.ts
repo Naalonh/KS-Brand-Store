@@ -45,7 +45,7 @@ const getCurrentViewFromPath = (pathname: string): View => {
     return 'adminResetPassword'
   }
 
-  if (path === '/admin' || path.startsWith('/admin/')) {
+  if (path === '/orders' || path === '/admin' || path.startsWith('/admin/')) {
     return 'admin'
   }
 

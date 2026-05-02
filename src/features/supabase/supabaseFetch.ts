@@ -28,11 +28,17 @@ export async function supabaseFetch<T>(
     )
   }
 
-  if (response.status === 204) {
+  if (response.status === 204 || response.status === 205) {
     return null as T
   }
 
-  return (await response.json()) as T
+  const responseText = await response.text()
+
+  if (!responseText.trim()) {
+    return null as T
+  }
+
+  return JSON.parse(responseText) as T
 }
 
 const getSupabaseErrorMessage = (errorText: string) => {

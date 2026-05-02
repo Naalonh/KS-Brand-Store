@@ -10,6 +10,7 @@ import { ProductsPanel } from './components/ProductsPanel'
 import { SizePanel } from './components/SizePanel'
 
 type AdminPageProps = {
+  accessToken: string
   activeSection: AdminSection
   categoriesState: CategoriesState
   onSectionChange: (section: AdminSection) => void
@@ -18,6 +19,7 @@ type AdminPageProps = {
 }
 
 export function AdminPage({
+  accessToken,
   activeSection,
   categoriesState,
   onSectionChange,
@@ -50,7 +52,7 @@ export function AdminPage({
             ) : null}
 
             {activeSection === 'orders' ? (
-              <OrdersPanel productsState={productsState} />
+              <OrdersPanel accessToken={accessToken} />
             ) : null}
 
             {activeSection === 'categories' ? (

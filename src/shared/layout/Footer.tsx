@@ -134,6 +134,22 @@ export function Footer({ language = 'en' }: FooterProps) {
           </div>
         </div>
       </div>
+      <div className="border-t border-[#9C7A42]/20">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 text-center text-xs font-bold tracking-[0.12em] text-[#B8A98A] sm:px-6 md:flex-row md:items-center md:justify-between md:text-left lg:px-8">
+          <p>© {new Date().getFullYear()} KS Brand Store. All rights reserved.</p>
+          <p>
+            Developer by :{' '}
+            <a
+              href="https://naalonh.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+            >
+              Lonh Sovanna
+            </a>
+          </p>
+        </div>
+      </div>
     </footer>
   )
 }

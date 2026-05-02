@@ -1,5 +1,16 @@
 export type OrderStatus = 'pending' | 'paid' | 'fulfilled' | 'cancelled'
 
+export type OrderItem = {
+  id: string
+  productId: string
+  productImage: string
+  productName: string
+  quantity: number
+  size: string
+  totalPrice: string
+  unitPrice: string
+}
+
 export type Order = {
   id: string
   orderNumber: string
@@ -7,23 +18,26 @@ export type Order = {
   customerName: string
   customerPhone: string
   createdAt: string
+  items: OrderItem[]
   note: string
-  productId: string
-  productName: string
-  quantity: number
-  size: string
   status: OrderStatus
   totalPrice: string
-  unitPrice: string
 }
 
-export type OrderForm = {
-  customerAddress: string
-  customerName: string
-  customerPhone: string
-  note: string
-  productId: string
-  quantity: string
-  size: string
-  status: OrderStatus
+export type OrderShareStatus = 'shared' | 'converted'
+
+export type OrderShare = {
+  id: string
+  convertedOrderId: string | null
+  createdAt: string
+  items: Array<{
+    image: string
+    name: string
+    price: string
+    productId: string
+    quantity: number
+    size: string
+  }>
+  status: OrderShareStatus
+  totalPrice: string
 }
