@@ -636,7 +636,9 @@ export function CartPage({
         </div>
       ) : null}
 
-      <Footer language={language} />
+      <div className="hidden sm:block">
+        <Footer language={language} />
+      </div>
     </>
   )
 }

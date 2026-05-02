@@ -60,7 +60,7 @@ export function Footer({ language = 'en' }: FooterProps) {
   const text = footerText[language]
 
   return (
-    <footer id="about-us" className="border-t border-[#9C7A42]/25 bg-[#130E0D]">
+    <footer id="about-us" className="hidden border-t border-[#9C7A42]/25 bg-[#130E0D] sm:block">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.1fr_0.9fr] lg:grid-cols-[1.15fr_0.85fr_0.85fr] lg:px-8">
         <div>
           <p className="text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
