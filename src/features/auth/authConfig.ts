@@ -1,6 +1,10 @@
+const canUseLocalAdminAuth = import.meta.env.DEV
+
 export const adminAuthConfig = {
-  email: import.meta.env.VITE_ADMIN_EMAIL ?? '',
-  password: import.meta.env.VITE_ADMIN_PASSWORD ?? '',
+  email: canUseLocalAdminAuth ? (import.meta.env.VITE_ADMIN_EMAIL ?? '') : '',
+  password: canUseLocalAdminAuth
+    ? (import.meta.env.VITE_ADMIN_PASSWORD ?? '')
+    : '',
 }
 
 export const isLocalAdminAuthConfigured = Boolean(

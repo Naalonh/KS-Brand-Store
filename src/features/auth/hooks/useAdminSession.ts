@@ -8,9 +8,12 @@ import {
 const SESSION_KEY = 'ks-brand-store-admin-session'
 
 const readSavedSession = () => {
-  const savedSession =
-    window.localStorage.getItem(SESSION_KEY) ??
-    window.sessionStorage.getItem(SESSION_KEY)
+  const savedSession = window.sessionStorage.getItem(SESSION_KEY)
+  const legacySavedSession = window.localStorage.getItem(SESSION_KEY)
+
+  if (legacySavedSession) {
+    window.localStorage.removeItem(SESSION_KEY)
+  }
 
   if (!savedSession) {
     return null
@@ -30,8 +33,8 @@ const readSavedSession = () => {
 }
 
 const saveSession = (session: AdminSession) => {
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-  window.sessionStorage.removeItem(SESSION_KEY)
+  window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  window.localStorage.removeItem(SESSION_KEY)
 }
 
 const clearSavedSession = () => {
