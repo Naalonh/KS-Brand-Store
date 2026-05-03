@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { CategoriesState } from '../../categories/hooks/useCategories'
 import type { ProductsState } from '../../products/hooks/useProducts'
+import {
+  formatProductCategories,
+  getProductCategories,
+} from '../../products/utils/productCategories'
 import type { SizesState } from '../../sizes/hooks/useSizes'
 import { useToast } from '../../../shared/toast/useToast'
 import { AdminInput } from './AdminInput'
@@ -22,6 +26,7 @@ const getSelectedSizes = (sizes: string) =>
 
 const maxSelectedSizes = 20
 const maxProductSizesLength = 512
+const maxProductCategoriesLength = 512
 
 const formatSelectedSizes = (sizes: string[]) => sizes.join(', ')
 
@@ -29,6 +34,33 @@ const canAddSize = (selectedSizes: string[], sizeName: string) =>
   selectedSizes.length < maxSelectedSizes &&
   formatSelectedSizes([...selectedSizes, sizeName]).length <=
     maxProductSizesLength
+
+const canAddCategory = (
+  selectedCategories: string[],
+  categoryName: string,
+) =>
+  formatProductCategories([...selectedCategories, categoryName]).length <=
+    maxProductCategoriesLength
+
+const getHighlightedNameParts = (name: string, searchTerm: string) => {
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase()
+
+  if (!normalizedSearchTerm) {
+    return { after: '', before: name, match: '' }
+  }
+
+  const matchIndex = name.toLowerCase().indexOf(normalizedSearchTerm)
+
+  if (matchIndex < 0) {
+    return { after: '', before: name, match: '' }
+  }
+
+  return {
+    after: name.slice(matchIndex + normalizedSearchTerm.length),
+    before: name.slice(0, matchIndex),
+    match: name.slice(matchIndex, matchIndex + normalizedSearchTerm.length),
+  }
+}
 
 export function ProductFormPanel({
   categoriesState,
@@ -41,6 +73,7 @@ export function ProductFormPanel({
     Boolean(productsState.form.discountPrice),
   )
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false)
+  const [isNameSuggestionOpen, setIsNameSuggestionOpen] = useState(false)
   const [isSizePickerOpen, setIsSizePickerOpen] = useState(false)
   const [imageBlob, setImageBlob] = useState<Blob | null>(null)
   const { showToast } = useToast()
@@ -52,17 +85,58 @@ export function ProductFormPanel({
     () => categoriesState.categories.filter((category) => category.active),
     [categoriesState.categories],
   )
+  const activeCategoryNames = useMemo(
+    () => activeCategories.map((category) => category.name),
+    [activeCategories],
+  )
   const selectedSizes = useMemo(
     () => getSelectedSizes(productsState.form.sizes),
     [productsState.form.sizes],
   )
+  const selectedCategories = useMemo(
+    () => getProductCategories(productsState.form.tag),
+    [productsState.form.tag],
+  )
+  const selectedActiveCategoryNames = useMemo(
+    () =>
+      activeCategoryNames.filter((categoryName) =>
+        selectedCategories.includes(categoryName),
+      ),
+    [activeCategoryNames, selectedCategories],
+  )
+  const productNameSearchTerm = productsState.form.name.trim()
+  const productNameSuggestions = useMemo(() => {
+    const normalizedSearchTerm = productNameSearchTerm.toLowerCase()
+
+    if (!normalizedSearchTerm) {
+      return []
+    }
+
+    return Array.from(
+      new Map(
+        productsState.products
+          .filter((product) =>
+            product.name.toLowerCase().includes(normalizedSearchTerm),
+          )
+          .map((product) => [product.name.toLowerCase(), product.name]),
+      ).values(),
+    ).slice(0, 6)
+  }, [productNameSearchTerm, productsState.products])
   const selectedSizeLabel =
     selectedSizes.length > 0
       ? `${selectedSizes.length} size${selectedSizes.length === 1 ? '' : 's'} selected`
       : 'Choose a size'
   const selectedCategoryLabel =
-    productsState.form.tag ||
-    (activeCategories.length > 0 ? 'Choose a category' : 'No active categories')
+    selectedCategories.length > 0
+      ? `${selectedCategories.length} categor${selectedCategories.length === 1 ? 'y' : 'ies'} selected`
+      : activeCategories.length > 0
+        ? 'Choose categories'
+        : 'No active categories'
+  const areAllCategoriesSelected =
+    activeCategoryNames.length > 0 &&
+    activeCategoryNames.every((categoryName) =>
+      selectedCategories.includes(categoryName),
+    )
 
   const toggleSize = (sizeName: string) => {
     if (!selectedSizes.includes(sizeName) && !canAddSize(selectedSizes, sizeName)) {
@@ -74,6 +148,27 @@ export function ProductFormPanel({
       : [...selectedSizes, sizeName]
 
     productsState.updateForm('sizes', formatSelectedSizes(nextSizes))
+  }
+
+  const toggleCategory = (categoryName: string) => {
+    if (
+      !selectedCategories.includes(categoryName) &&
+      !canAddCategory(selectedCategories, categoryName)
+    ) {
+      return
+    }
+
+    const nextCategories = selectedCategories.includes(categoryName)
+      ? selectedCategories.filter(
+          (selectedCategory) => selectedCategory !== categoryName,
+        )
+      : [...selectedCategories, categoryName]
+
+    productsState.updateForm('tag', formatProductCategories(nextCategories))
+  }
+
+  const selectAllCategories = () => {
+    productsState.updateForm('tag', formatProductCategories(activeCategoryNames))
   }
 
   const handleSubmit: ProductsState['handleSubmit'] = async (event) => {
@@ -132,12 +227,61 @@ export function ProductFormPanel({
       </div>
 
       <div className="mt-6 grid gap-4">
-        <AdminInput
-          label="Name"
-          value={productsState.form.name}
-          placeholder="Noir Runner"
-          onChange={(value) => productsState.updateForm('name', value)}
-        />
+        <div
+          className="relative grid gap-2"
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+              setIsNameSuggestionOpen(false)
+            }
+          }}
+        >
+          <label className="grid gap-2">
+            <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
+              Name
+            </span>
+            <input
+              value={productsState.form.name}
+              onChange={(event) => {
+                productsState.updateForm('name', event.target.value)
+                setIsNameSuggestionOpen(true)
+              }}
+              onFocus={() => setIsNameSuggestionOpen(true)}
+              placeholder="Noir Runner"
+              required
+              className="min-h-12 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] px-4 text-[#FFF8E7] outline-none transition placeholder:text-[#B8A98A]/55 focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
+            />
+          </label>
+          {isNameSuggestionOpen && productNameSuggestions.length > 0 ? (
+            <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.65)]">
+              {productNameSuggestions.map((name) => {
+                const highlightedNameParts = getHighlightedNameParts(
+                  name,
+                  productNameSearchTerm,
+                )
+
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => {
+                      productsState.updateForm('name', name)
+                      setIsNameSuggestionOpen(false)
+                    }}
+                    className="block min-h-11 w-full cursor-pointer rounded-[8px] px-3 text-left text-sm font-black text-[#B8A98A] transition hover:bg-[#130E0D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D]"
+                  >
+                    {highlightedNameParts.before}
+                    {highlightedNameParts.match ? (
+                      <span className="text-[#FDD97D]">
+                        {highlightedNameParts.match}
+                      </span>
+                    ) : null}
+                    {highlightedNameParts.after}
+                  </button>
+                )
+              })}
+            </div>
+          ) : null}
+        </div>
         <div className="grid gap-3">
           <div className="grid gap-4 sm:grid-cols-2">
             <AdminInput
@@ -202,7 +346,7 @@ export function ProductFormPanel({
         </div>
         <div className="grid gap-2">
           <span className="text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A]">
-            Category
+            Categories
           </span>
           <div
             className="relative"
@@ -247,30 +391,88 @@ export function ProductFormPanel({
             {isCategoryPickerOpen ? (
               <div
                 role="listbox"
-                className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] shadow-[0_18px_45px_rgba(0,0,0,0.65)]"
+                aria-multiselectable="true"
+                className="absolute left-0 top-full z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-[10px] border border-[#9C7A42]/45 bg-[#000000] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.65)]"
               >
-                {activeCategories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    role="option"
-                    aria-selected={productsState.form.tag === category.name}
-                    onClick={() => {
-                      productsState.updateForm('tag', category.name)
-                      setIsCategoryPickerOpen(false)
-                    }}
-                    className={`block min-h-11 w-full cursor-pointer px-4 text-left text-sm font-black transition ${
-                      productsState.form.tag === category.name
-                        ? 'bg-[#E4B45A] text-[#000000]'
-                        : 'text-[#B8A98A] hover:bg-[#130E0D] hover:text-[#FDD97D]'
-                    }`}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={areAllCategoriesSelected}
+                  onClick={selectAllCategories}
+                  className={`mb-2 flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-[8px] border px-3 text-left text-sm font-black transition ${
+                    areAllCategoriesSelected
+                      ? 'border-[#E4B45A] bg-[#130E0D] text-[#FDD97D]'
+                      : 'border-[#9C7A42]/35 bg-[#130E0D] text-[#E4B45A] hover:border-[#FDD97D] hover:text-[#FDD97D]'
+                  }`}
+                >
+                  <span className="min-w-0 truncate">Select All</span>
+                  {areAllCategoriesSelected ? (
+                    <span
+                      aria-hidden="true"
+                      className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#E4B45A] text-[0.65rem] font-black leading-none text-[#000000]"
+                    >
+                      ✓
+                    </span>
+                  ) : null}
+                </button>
+                {activeCategories.map((category) => {
+                  const isSelected = selectedCategories.includes(category.name)
+                  const selectedIndex =
+                    selectedActiveCategoryNames.indexOf(category.name)
+                  const selectedCount = selectedActiveCategoryNames.length
+                  const selectedRadiusClass =
+                    selectedCount === 1
+                      ? 'rounded-[8px]'
+                      : selectedIndex === 0
+                        ? 'rounded-t-[8px]'
+                        : selectedIndex === selectedCount - 1
+                          ? 'rounded-b-[8px]'
+                          : 'rounded-none'
+                  const isDisabled =
+                    !isSelected &&
+                    !canAddCategory(selectedCategories, category.name)
+
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      disabled={isDisabled}
+                      onClick={() => toggleCategory(category.name)}
+                      className={`flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 px-3 text-left text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                        isSelected
+                          ? `${selectedRadiusClass} bg-[#130E0D] text-[#FFF8E7]`
+                          : 'rounded-[8px] text-[#B8A98A] hover:bg-[#130E0D] hover:text-[#FDD97D]'
+                      }`}
+                    >
+                      <span className="min-w-0 truncate">{category.name}</span>
+                      {isSelected ? (
+                        <span
+                          aria-hidden="true"
+                          className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#E4B45A] text-[0.65rem] font-black leading-none text-[#000000]"
+                        >
+                          ✓
+                        </span>
+                      ) : null}
+                    </button>
+                  )
+                })}
               </div>
             ) : null}
           </div>
+          {selectedCategories.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {selectedCategories.map((category) => (
+                <span
+                  key={category}
+                  className="inline-flex min-h-8 max-w-full items-center rounded-[8px] border border-[#9C7A42]/40 px-3 text-xs font-black uppercase tracking-[0.08em] text-[#E4B45A]"
+                >
+                  <span className="truncate">{category}</span>
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
         <ProductImagePicker
           accessToken={productsState.accessToken}
@@ -296,6 +498,15 @@ export function ProductFormPanel({
       </div>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-6 text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+          >
+            Cancel
+          </button>
+        ) : null}
         <button
           type="submit"
           className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-6 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"

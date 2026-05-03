@@ -3,6 +3,7 @@ import type { CategoriesState } from '../../categories/hooks/useCategories'
 import type { ProductsState } from '../../products/hooks/useProducts'
 import type { SizesState } from '../../sizes/hooks/useSizes'
 import type { Product } from '../../products/types'
+import { getProductCategories } from '../../products/utils/productCategories'
 import { useToast } from '../../../shared/toast/useToast'
 import { AdminSummaryCard, type AdminSummaryIcon } from './AdminSummaryCard'
 import { ProductFormPanel } from './ProductFormPanel'
@@ -70,7 +71,7 @@ export function ProductsPanel({
       Array.from(
         new Set(
           productsState.products
-            .map((product) => product.tag.trim())
+            .flatMap((product) => getProductCategories(product.tag))
             .filter(Boolean),
         ),
       ),
@@ -82,7 +83,8 @@ export function ProductsPanel({
       productsState.products.filter(
         (product) =>
           matchesSearch(product, searchTerm) &&
-          (categoryFilter === 'all' || product.tag === categoryFilter),
+          (categoryFilter === 'all' ||
+            getProductCategories(product.tag).includes(categoryFilter)),
       ),
     [categoryFilter, productsState.products, searchTerm],
   )

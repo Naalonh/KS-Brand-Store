@@ -2,6 +2,7 @@ import type { Product } from '../../products/types'
 
 type ProductCardProps = {
   language: 'en' | 'km'
+  onAddToCart: (product: Product, quantity: number, size: string) => void
   onSelect: (product: Product) => void
   product: Product
 }
@@ -46,11 +47,25 @@ const formatPrice = (price: string) => {
   return trimmedPrice.includes('$') ? trimmedPrice : `${trimmedPrice}$`
 }
 
-export function ProductCard({ language, onSelect, product }: ProductCardProps) {
+const getProductSizes = (sizes: string) =>
+  sizes
+    .split(',')
+    .map((size) => size.trim())
+    .filter(Boolean)
+
+export function ProductCard({
+  language,
+  onAddToCart,
+  onSelect,
+  product,
+}: ProductCardProps) {
   const text = productCardText[language]
   const discountPrice = product.discountPrice?.trim()
   const badgeLabel = getDiscountLabel(product.price, discountPrice)
   const openProductDetails = () => onSelect(product)
+  const addProductToCart = () => {
+    onAddToCart(product, 1, getProductSizes(product.sizes)[0] ?? '')
+  }
 
   return (
     <article
@@ -94,15 +109,16 @@ export function ProductCard({ language, onSelect, product }: ProductCardProps) {
               {formatPrice(discountPrice || product.price)}
             </span>
           </div>
-          <a
-            href="https://m.me/ksbrandstore"
-            target="_blank"
-            rel="noreferrer"
-            onClick={(event) => event.stopPropagation()}
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              addProductToCart()
+            }}
             className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-[8px] bg-[#E4B45A] px-3 text-center text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] sm:min-h-11 sm:px-7 sm:text-sm sm:tracking-[0.12em]"
           >
             {text.order}
-          </a>
+          </button>
         </div>
       </div>
     </article>

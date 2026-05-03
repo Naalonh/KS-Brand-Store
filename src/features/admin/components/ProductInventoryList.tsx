@@ -113,6 +113,8 @@ export function ProductInventoryList({
   const [currentPage, setCurrentPage] = useState(1)
   const [isPageSizeOpen, setIsPageSizeOpen] = useState(false)
   const [pageSize, setPageSize] = useState(pageSizeOptions[0])
+  const [productPendingDelete, setProductPendingDelete] =
+    useState<Product | null>(null)
   const [viewedProduct, setViewedProduct] = useState<Product | null>(null)
   const totalPages = Math.max(Math.ceil(products.length / pageSize), 1)
   const safeCurrentPage = Math.min(currentPage, totalPages)
@@ -128,6 +130,24 @@ export function ProductInventoryList({
     setPageSize(nextPageSize)
     setCurrentPage(1)
     setIsPageSizeOpen(false)
+  }
+
+  const requestDeleteProduct = (product: Product) => {
+    setProductPendingDelete(product)
+  }
+
+  const confirmDeleteProduct = async () => {
+    if (!productPendingDelete) {
+      return
+    }
+
+    const productId = productPendingDelete.id
+
+    setProductPendingDelete(null)
+    if (viewedProduct?.id === productId) {
+      setViewedProduct(null)
+    }
+    await onDelete(productId)
   }
 
   return (
@@ -218,7 +238,7 @@ export function ProductInventoryList({
                   <ProductActions
                     direction="column"
                     product={product}
-                    onDelete={onDelete}
+                    onDelete={requestDeleteProduct}
                     onEdit={onEdit}
                     onToggleStatus={onToggleStatus}
                   />
@@ -232,7 +252,7 @@ export function ProductInventoryList({
             <thead>
               <tr className="border-b border-[#9C7A42]/25 bg-[#130E0D] text-xs font-black uppercase tracking-[0.16em] text-[#B8A98A]">
                 <th className="w-[30%] px-3 py-4">Product</th>
-                <th className="w-[16%] px-3 py-4">Category</th>
+                <th className="w-[16%] px-3 py-4">Categories</th>
                 <th className="w-[17%] px-3 py-4">Price</th>
                 <th className="w-[15%] px-3 py-4">Status</th>
                 <th className="w-[22%] px-3 py-4 text-right">Actions</th>
@@ -276,7 +296,7 @@ export function ProductInventoryList({
                     <div className="flex justify-end">
                       <ProductActions
                         product={product}
-                        onDelete={onDelete}
+                        onDelete={requestDeleteProduct}
                         onEdit={onEdit}
                         onToggleStatus={onToggleStatus}
                       />
@@ -383,11 +403,18 @@ export function ProductInventoryList({
     </section>
     {viewedProduct ? (
       <ProductDetailDialog
-        onDelete={onDelete}
+        onRequestDelete={requestDeleteProduct}
         onEdit={onEdit}
         onClose={() => setViewedProduct(null)}
         onToggleStatus={onToggleStatus}
         product={viewedProduct}
+      />
+    ) : null}
+    {productPendingDelete ? (
+      <DeleteProductDialog
+        onCancel={() => setProductPendingDelete(null)}
+        onConfirm={confirmDeleteProduct}
+        product={productPendingDelete}
       />
     ) : null}
     </>
@@ -395,17 +422,17 @@ export function ProductInventoryList({
 }
 
 type ProductDetailDialogProps = {
-  onDelete: (productId: string) => void | Promise<void>
   onEdit: (product: Product) => void
   onClose: () => void
+  onRequestDelete: (product: Product) => void
   onToggleStatus: (productId: string) => void | Promise<void>
   product: Product
 }
 
 function ProductDetailDialog({
   onClose,
-  onDelete,
   onEdit,
+  onRequestDelete,
   onToggleStatus,
   product,
 }: ProductDetailDialogProps) {
@@ -414,9 +441,9 @@ function ProductDetailDialog({
     onEdit(product)
   }
 
-  const deleteProduct = async () => {
+  const deleteProduct = () => {
     onClose()
-    await onDelete(product.id)
+    onRequestDelete(product)
   }
 
   const toggleProductStatus = async () => {
@@ -465,7 +492,7 @@ function ProductDetailDialog({
           <div className="grid content-start gap-4 md:border-l md:border-[#9C7A42]/25 md:pl-6">
             <div className="grid gap-1">
               <span className="text-xs font-black uppercase tracking-[0.14em] text-[#9C7A42]">
-                Category
+                Categories
               </span>
               <span className="text-base font-black text-[#FFF8E7]">
                 {product.tag}
@@ -500,9 +527,70 @@ function ProductDetailDialog({
   )
 }
 
+type DeleteProductDialogProps = {
+  onCancel: () => void
+  onConfirm: () => void | Promise<void>
+  product: Product
+}
+
+function DeleteProductDialog({
+  onCancel,
+  onConfirm,
+  product,
+}: DeleteProductDialogProps) {
+  return (
+    <div
+      className="fixed inset-0 z-[70] grid place-items-center bg-[#000000]/75 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-6"
+      role="presentation"
+      onMouseDown={onCancel}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-product-title"
+        aria-describedby="delete-product-description"
+        onMouseDown={(event) => event.stopPropagation()}
+        className="w-full max-w-md rounded-2xl border border-[#9C7A42]/35 bg-[#130E0D] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.8)] sm:rounded-3xl sm:p-6"
+      >
+        <p className="text-sm font-black uppercase tracking-[0.18em] text-[#E4B45A]">
+          Delete Product
+        </p>
+        <h3
+          id="delete-product-title"
+          className="mt-2 text-2xl font-black text-[#FFF8E7]"
+        >
+          Are you sure?
+        </h3>
+        <p
+          id="delete-product-description"
+          className="mt-3 text-sm font-semibold leading-6 text-[#B8A98A]"
+        >
+          This will delete {product.name}. This action cannot be undone.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-5 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-5 text-xs font-black uppercase tracking-[0.12em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 type ProductActionsProps = {
   direction?: 'row' | 'column'
-  onDelete: (productId: string) => void | Promise<void>
+  onDelete: (product: Product) => void | Promise<void>
   onEdit: (product: Product) => void
   onToggleStatus: (productId: string) => void | Promise<void>
   product: Product
@@ -544,7 +632,7 @@ function ProductActions({
       </button>
       <button
         type="button"
-        onClick={() => onDelete(product.id)}
+        onClick={() => onDelete(product)}
         className={`inline-flex ${buttonSizeClass} shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#E4B45A] focus:ring-offset-2 focus:ring-offset-[#000000]`}
         aria-label="Delete product"
         title="Delete"

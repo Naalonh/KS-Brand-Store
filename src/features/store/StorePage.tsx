@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Footer } from '../../shared/layout/Footer'
 import type { Category } from '../categories/types'
 import type { Product } from '../products/types'
+import { getProductCategories } from '../products/utils/productCategories'
 import { ProductCard } from './components/ProductCard'
 import bannerImage from '../../../banner.png'
 
@@ -105,13 +106,30 @@ export function StorePage({
           const category = activeCategories.find(
             (currentCategory) => currentCategory.slug === selectedCategorySlug,
           )
-          const categoryName = category?.name.toLowerCase() ?? ''
-          const categorySlug = category?.slug.toLowerCase() ?? ''
+          const categoryName = category?.name ?? ''
+          const categorySlug = category?.slug ?? ''
+          const productCategories = getProductCategories(product.tag).map(
+            (productCategory) => productCategory.toLowerCase(),
+          )
           const productText = `${product.name} ${product.tag}`.toLowerCase()
 
           return (
-            Boolean(categoryName && productText.includes(categoryName)) ||
-            Boolean(categorySlug && productText.includes(categorySlug))
+            Boolean(
+              categoryName &&
+                productCategories.includes(categoryName.toLowerCase()),
+            ) ||
+            Boolean(
+              categorySlug &&
+                productCategories.includes(categorySlug.toLowerCase()),
+            ) ||
+            Boolean(
+              categoryName &&
+                productText.includes(categoryName.toLowerCase()),
+            ) ||
+            Boolean(
+              categorySlug &&
+                productText.includes(categorySlug.toLowerCase()),
+            )
           )
         })
   const totalPages = Math.max(
@@ -208,6 +226,7 @@ export function StorePage({
                   <ProductCard
                     key={product.id}
                     language={language}
+                    onAddToCart={onAddToCart}
                     onSelect={openProductDetails}
                     product={product}
                   />

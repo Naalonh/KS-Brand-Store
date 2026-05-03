@@ -9,7 +9,7 @@ create table if not exists public.products (
     or char_length(trim(discount_price)) between 1 and 40
   ),
   sizes text not null check (char_length(trim(sizes)) between 1 and 512),
-  tag text not null check (char_length(trim(tag)) between 1 and 80),
+  tag text not null check (char_length(trim(tag)) between 1 and 512),
   image_url text not null check (image_url ~* '^https?://'),
   active boolean not null default true,
   sort_order integer not null default 0,
@@ -23,6 +23,13 @@ drop constraint if exists products_sizes_check;
 alter table public.products
 add constraint products_sizes_check
 check (char_length(trim(sizes)) between 1 and 512);
+
+alter table public.products
+drop constraint if exists products_tag_check;
+
+alter table public.products
+add constraint products_tag_check
+check (char_length(trim(tag)) between 1 and 512);
 
 create index if not exists products_active_sort_order_idx
   on public.products (active, sort_order, created_at desc);

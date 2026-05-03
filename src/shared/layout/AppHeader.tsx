@@ -305,7 +305,7 @@ export function AppHeader({
             <button
               type="button"
               onClick={() => onOpenView('admin')}
-              className="hidden min-h-10 items-center justify-center rounded-full border border-[#9C7A42]/70 bg-[#130E0D] px-4 text-xs font-black uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000] sm:inline-flex"
+              className="hidden min-h-10 items-center justify-center rounded-full border border-[#9C7A42]/70 bg-[#130E0D] px-4 text-xs font-normal uppercase tracking-[0.12em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000] sm:inline-flex"
             >
               Dashboard
             </button>
@@ -314,7 +314,7 @@ export function AppHeader({
             type="button"
             onClick={onToggleLanguage}
             aria-label={labels.languageLabel}
-            className="hidden h-10 min-w-[6.75rem] shrink-0 items-center justify-center gap-2 rounded-full border border-[#9C7A42]/55 bg-[#000000] px-3 text-[0.72rem] font-black text-[#B8A98A] transition hover:border-[#E4B45A] hover:text-[#FDD97D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000] sm:inline-flex"
+            className="hidden h-10 min-w-[6.75rem] shrink-0 items-center justify-center gap-2 rounded-full border border-[#9C7A42]/55 bg-[#000000] px-3 text-[0.72rem] font-normal text-[#B8A98A] transition hover:border-[#E4B45A] hover:text-[#FDD97D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000] sm:inline-flex"
           >
             {isKhmer ? <CambodiaFlagIcon /> : <EnglishFlagIcon />}
             <span className={isKhmer ? 'khmer-font' : undefined}>
@@ -334,7 +334,7 @@ export function AppHeader({
               stroke="currentColor"
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth="2.1"
+              strokeWidth="1.8"
               viewBox="0 0 24 24"
             >
               <path d="M4 10h16" />
@@ -347,16 +347,16 @@ export function AppHeader({
             type="button"
             onClick={() => onOpenView('cart')}
             aria-label="Open cart"
-            className="relative inline-flex h-12 w-12 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]"
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-[#E4B45A] transition hover:text-[#FDD97D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDD97D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]"
           >
             <svg
               aria-hidden="true"
-              className="h-7 w-7"
+              className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth="2.2"
+              strokeWidth="1.8"
               viewBox="0 0 24 24"
             >
               <circle cx="9" cy="20" r="1.4" />
@@ -368,7 +368,7 @@ export function AppHeader({
             {cartQuantity > 0 ? (
               <span
                 aria-hidden="true"
-                className="absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-black leading-none text-white"
+                className="absolute right-0.5 top-0.5 grid h-5 min-w-5 place-items-center rounded-full border border-[#000000] bg-[#1A8CFF] px-1 text-[0.65rem] font-normal leading-none text-white"
               >
                 {cartQuantity}
               </span>
@@ -392,7 +392,7 @@ export function AppHeader({
                 stroke="currentColor"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="2.1"
+                strokeWidth="1.8"
                 viewBox="0 0 24 24"
               >
                 <circle cx="12" cy="12" r="4" />
@@ -413,7 +413,7 @@ export function AppHeader({
                 stroke="currentColor"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="2.1"
+                strokeWidth="1.8"
                 viewBox="0 0 24 24"
               >
                 <path d="M20.5 14.2A8 8 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" />

@@ -52,7 +52,11 @@ const getSavedLanguage = (): Language => {
   return savedLanguage === 'km' ? 'km' : 'en'
 }
 
-function StoreLoadingPage() {
+type LoadingPageProps = {
+  label?: string
+}
+
+function LoadingPage({ label = 'Loading...' }: LoadingPageProps) {
   return (
     <main className="grid min-h-[calc(100vh-5rem)] place-items-center px-4 py-16">
       <section className="grid justify-items-center">
@@ -65,7 +69,7 @@ function StoreLoadingPage() {
           />
         </div>
         <p className="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
-          Loading...
+          {label}
         </p>
       </section>
     </main>
@@ -96,6 +100,11 @@ function App() {
   const isStoreDataLoading =
     currentView === 'store' &&
     (productsState.isLoading || categoriesState.isLoading)
+  const isAdminDataLoading =
+    canShowAdmin &&
+    (productsState.isLoading ||
+      categoriesState.isLoading ||
+      sizesState.isLoading)
 
   useEffect(() => {
     window.localStorage.setItem(THEME_KEY, theme)
@@ -333,19 +342,12 @@ function App() {
       />
 
       {isStoreDataLoading ? (
-        <StoreLoadingPage />
+        <LoadingPage />
       ) : isAdminAreaRoute &&
       (adminSession.isRestoring || isRedirectingAuthenticatedLogin) ? (
-        <main className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl place-items-center px-4 py-12 sm:px-6 lg:px-8">
-          <section className="w-full max-w-md rounded-3xl border border-[#9C7A42]/35 bg-[#130E0D] p-6 text-center shadow-[0_30px_90px_rgba(0,0,0,0.65)] sm:p-8">
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#E4B45A]">
-              Admin Access
-            </p>
-            <h1 className="mt-3 text-3xl font-black text-[#FFF8E7]">
-              Restoring your session.
-            </h1>
-          </section>
-        </main>
+        <LoadingPage label="Loading admin..." />
+      ) : isAdminDataLoading ? (
+        <LoadingPage label="Loading admin..." />
       ) : canShowAdmin ? (
         <AdminPage
           accessToken={adminSession.accessToken ?? ''}
