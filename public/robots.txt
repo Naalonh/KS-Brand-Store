@@ -4,4 +4,4 @@ Disallow: /admin/
 Disallow: /cart
 Disallow: /orders
 
-Sitemap: https://ksbrandstore.com/sitemap.xml
+Sitemap: https://ksbrandstore.naalonh.com/sitemap.xml
