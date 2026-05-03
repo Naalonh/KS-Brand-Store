@@ -45,6 +45,25 @@ button {
   }
 }
 
+.product-submit-progress {
+  animation: product-submit-progress 900ms ease-in-out infinite;
+  transform-origin: left;
+}
+
+@keyframes product-submit-progress {
+  0% {
+    transform: scaleX(0);
+  }
+
+  55% {
+    transform: scaleX(1);
+  }
+
+  100% {
+    transform: scaleX(1);
+  }
+}
+
 [data-theme='light'] {
   color-scheme: light;
   background-color: #fff8e7;

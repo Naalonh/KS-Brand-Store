@@ -75,6 +75,7 @@ export function ProductFormPanel({
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false)
   const [isNameSuggestionOpen, setIsNameSuggestionOpen] = useState(false)
   const [isSizePickerOpen, setIsSizePickerOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [imageBlob, setImageBlob] = useState<Blob | null>(null)
   const { showToast } = useToast()
   const activeSizes = useMemo(
@@ -172,21 +173,35 @@ export function ProductFormPanel({
   }
 
   const handleSubmit: ProductsState['handleSubmit'] = async (event) => {
-    const wasEditing = Boolean(productsState.editingId)
-    const didSubmit = await productsState.handleSubmit(event, imageBlob ?? undefined)
-
-    if (didSubmit) {
-      onSubmitted?.()
-      showToast({
-        message: wasEditing
-          ? 'Product was updated successfully.'
-          : 'Product was added successfully.',
-        tone: 'success',
-      })
-      setImageBlob(null)
+    if (isSubmitting) {
+      event.preventDefault()
+      return false
     }
 
-    return didSubmit
+    const wasEditing = Boolean(productsState.editingId)
+    setIsSubmitting(true)
+
+    try {
+      const didSubmit = await productsState.handleSubmit(
+        event,
+        imageBlob ?? undefined,
+      )
+
+      if (didSubmit) {
+        onSubmitted?.()
+        showToast({
+          message: wasEditing
+            ? 'Product was updated successfully.'
+            : 'Product was added successfully.',
+          tone: 'success',
+        })
+        setImageBlob(null)
+      }
+
+      return didSubmit
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -246,7 +261,7 @@ export function ProductFormPanel({
                 setIsNameSuggestionOpen(true)
               }}
               onFocus={() => setIsNameSuggestionOpen(true)}
-              placeholder="Noir Runner"
+              placeholder="Enter product name"
               required
               className="min-h-12 rounded-2xl border border-[#9C7A42]/35 bg-[#000000] px-4 text-[#FFF8E7] outline-none transition placeholder:text-[#B8A98A]/55 focus:border-[#E4B45A] focus:ring-2 focus:ring-[#E4B45A]/35"
             />
@@ -502,6 +517,7 @@ export function ProductFormPanel({
           <button
             type="button"
             onClick={onCancel}
+            disabled={isSubmitting}
             className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center rounded-[10px] border border-[#9C7A42]/70 px-6 text-sm font-black uppercase tracking-[0.14em] text-[#B8A98A] transition hover:border-[#FDD97D] hover:text-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
           >
             Cancel
@@ -509,9 +525,23 @@ export function ProductFormPanel({
         ) : null}
         <button
           type="submit"
-          className="inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center rounded-[10px] bg-[#E4B45A] px-6 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D]"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+          className="relative inline-flex min-h-12 flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-[10px] bg-[#E4B45A] px-6 text-sm font-black uppercase tracking-[0.14em] text-[#000000] transition hover:bg-[#FDD97D] focus:outline-none focus:ring-2 focus:ring-[#FDD97D] focus:ring-offset-2 focus:ring-offset-[#130E0D] disabled:cursor-wait disabled:opacity-90"
         >
-          {productsState.editingId ? 'Save Product' : 'Add Product'}
+          <span className="relative z-10">
+            {isSubmitting
+              ? 'Processing...'
+              : productsState.editingId
+                ? 'Save Product'
+                : 'Add Product'}
+          </span>
+          {isSubmitting ? (
+            <span
+              aria-hidden="true"
+              className="product-submit-progress absolute bottom-0 left-0 h-1 w-full bg-[#000000]/80"
+            />
+          ) : null}
         </button>
 
       </div>
